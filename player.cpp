@@ -9,6 +9,10 @@
 #include <netinet/tcp.h> // SO_REUSEADDR
 #include <sys/uio.h>     // writev
 #include <string.h>
+#include <string>
+
+using namespace std;
+
 int main(int argc, char *argv[])
 {
     const int server_port = 12345;
@@ -36,8 +40,9 @@ int main(int argc, char *argv[])
     // write the string
     while (true)
     {
+        memset(send_string, 0, sizeof(send_string));
         printf("What should I send?\n");
-        scanf("%s", send_string);
+        cin.getline(send_string, sizeof(send_string));
         int write_result = write(clientSd, send_string, strlen(send_string));
     }
     // quit
