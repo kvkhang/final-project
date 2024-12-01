@@ -1,120 +1,170 @@
-#include <iostream>      //
-#include <sys/types.h>   // socket, bind
-#include <sys/socket.h>  // socket, bind, listen, inet_ntoa
-#include <netinet/in.h>  // htonl, htons, inet_ntoa
-#include <arpa/inet.h>   // inet_ntoa
-#include <netdb.h>       // gethostbyname
-#include <unistd.h>      // read, write, close
-#include <strings.h>     // bzero
-#include <netinet/tcp.h> // SO_REUSEADDR
-#include <sys/uio.h>     // writev
-#include <sys/time.h>    // gettimeofday
-#include <pthread.h>     // threads
-#include <cstring>       // memset
+#include "server.h"
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <pthread.h>
+#include <errno.h>
 
 using namespace std;
 
-const unsigned int BUF_SIZE = 65535;
-
-// Struct to hold thread data
-struct thread_data
+Server::Server(const std::string &address, int port, int backlog)
+    : serverAddress(address), serverPort(port), backlog(backlog), serverSd(-1)
 {
-    int sd;
-};
-
-void *thread_server(void *arg)
-{
-    // get data from struct
-    thread_data *data = (thread_data *)arg;
-    int newSd = data->sd;
-    delete data; // free allocated memory
-
-    char databuf[BUF_SIZE];
-    memset(databuf, 0, BUF_SIZE);
-    int totalBytesRead = 0;
-    int count = 0;
-
-    // Reading data from the client
-    while (true)
-    {
-        memset(databuf, 0, BUF_SIZE);
-        int result = read(newSd, databuf, BUF_SIZE);
-        if (result < 0)
-        {
-            cerr << "Error reading: " << strerror(errno) << endl;
-            close(newSd); // close on error
-            return NULL;
-        }
-        else if (result == 0)
-        {
-            cout << "Client disconnected" << endl;
-            close(newSd); // clos e if client disconnects
-            return NULL;
-        }
-        cout << databuf << endl;
-        if (strcmp(databuf, "quit") == 0)
-        {
-            cout << "they quit, but implement how it works please!" << endl;
-        }
-    }
-
-    close(newSd); // Close connection
-    return NULL;
+    memset(&serverAddr, 0, sizeof(serverAddr));
 }
 
-int main()
+Server::~Server()
 {
-    // Create the socket
-    int server_port = 12345;
+    cleanUp();
+}
 
-    sockaddr_in acceptSockAddr;
-    bzero((char *)&acceptSockAddr, sizeof(acceptSockAddr)); // zero out the data structure
-    acceptSockAddr.sin_family = AF_INET;                    // using IP
-    acceptSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);     // listen on any address this computer has
-    acceptSockAddr.sin_port = htons(server_port);           // set the port to listen on
-
-    int serverSd = socket(AF_INET, SOCK_STREAM, 0); // creates a new socket for IP using TCP
-
-    const int on = 1;
-    setsockopt(serverSd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(int)); // this lets us reuse the socket without waiting for hte OS to recycle it
-
-    // Bind the socket
-    if (bind(serverSd, (sockaddr *)&acceptSockAddr, sizeof(acceptSockAddr)) < 0)
+bool Server::initialize()
+{
+    // Create the server socket
+    serverSd = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSd < 0)
     {
-        cerr << "Error binding socket: " << strerror(errno) << endl;
-        return -1;
+        cerr << "Error: Failed to create socket: " << strerror(errno) << endl;
+        return false;
     }
 
-    // Listen on the socket
-    int n = 5;
-    listen(serverSd, n); // listen on the socket and allow up to n connections to wait.
+    // Allow socket reuse
+    const int on = 1;
+    setsockopt(serverSd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-    // Accept the connection as a new socket
-    sockaddr_in newSockAddr; // place to store parameters for the new connection
-    socklen_t newSockAddrSize = sizeof(newSockAddr);
+    // Configure the server address
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons(serverPort);
+
+    // Bind the socket
+    if (bind(serverSd, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
+    {
+        cerr << "Error: Failed to bind socket: " << strerror(errno) << endl;
+        cleanUp();
+        return false;
+    }
+
+    // Start listening
+    if (listen(serverSd, backlog) < 0)
+    {
+        cerr << "Error: Failed to listen on socket: " << strerror(errno) << endl;
+        cleanUp();
+        return false;
+    }
+
+    cout << "Server initialized and listening on " << serverAddress << ":" << serverPort << endl;
+    return true;
+}
+
+void Server::start()
+{
     while (true)
     {
-        // Accept a new connection
-        int newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
-        if (newSd < 0)
+        sockaddr_in clientAddr;
+        socklen_t clientAddrLen = sizeof(clientAddr);
+
+        // Accept a new client connection
+        int clientSd = accept(serverSd, (sockaddr *)&clientAddr, &clientAddrLen);
+        if (clientSd < 0)
         {
-            cerr << "Error accepting connection: " << strerror(errno) << endl;
+            cerr << "Error: Failed to accept client connection: " << strerror(errno) << endl;
             continue;
         }
 
-        // Create a thread for the new connection
-        pthread_t thread;
-        thread_data *data = new thread_data;
-        data->sd = newSd;
+        cout << "Accepted new connection from client." << endl;
 
-        if (pthread_create(&thread, NULL, thread_server, (void *)data) != 0)
+        // Create a new thread to handle the client
+        pthread_t thread;
+        ThreadData *data = new ThreadData{clientSd};
+
+        if (pthread_create(&thread, NULL, handleClient, (void *)data) != 0)
         {
-            cerr << "Error creating thread: " << strerror(errno) << endl;
-            delete data; // free memory in case of error
-            close(newSd);
+            cerr << "Error: Failed to create thread: " << strerror(errno) << endl;
+            delete data;
+            close(clientSd);
+            continue;
         }
 
-        pthread_detach(thread); // Detach thread so it cleans up after itself
+        pthread_detach(thread); // Detach the thread for automatic cleanup
     }
-    return 0;
+}
+
+void *Server::handleClient(void *arg)
+{
+    ThreadData *data = (ThreadData *)arg;
+    int clientSd = data->clientSd;
+    delete data; // Free memory after extracting client socket
+
+    char buffer[BUF_SIZE];
+    memset(buffer, 0, BUF_SIZE);
+
+    fd_set readfds;
+    struct timeval timeout;
+
+    // Handle client communication
+    while (true)
+    {
+        FD_ZERO(&readfds);
+        FD_SET(clientSd, &readfds);
+
+        timeout.tv_sec = 5; // Set a timeout of 5 seconds
+        timeout.tv_usec = 0;
+
+        int activity = select(clientSd + 1, &readfds, NULL, NULL, &timeout);
+        if (activity < 0)
+        {
+            cerr << "Error: select failed: " << strerror(errno) << endl;
+            close(clientSd);
+            return nullptr;
+        }
+
+        if (activity == 0)
+        {
+            // Timeout occurred, no data received
+            cout << "Timeout occurred, no data received." << endl;
+            continue;
+        }
+
+        // Check if the client socket is ready for reading
+        if (FD_ISSET(clientSd, &readfds))
+        {
+            memset(buffer, 0, BUF_SIZE);
+            int bytesRead = read(clientSd, buffer, BUF_SIZE);
+            if (bytesRead < 0)
+            {
+                cerr << "Error: Failed to read from client: " << strerror(errno) << endl;
+                close(clientSd);
+                return nullptr;
+            }
+            else if (bytesRead == 0)
+            {
+                // Client disconnected
+                cout << "Client disconnected." << endl;
+                close(clientSd);
+                return nullptr;
+            }
+
+            cout << "Received: " << buffer << endl;
+
+            if (strcmp(buffer, "quit") == 0)
+            {
+                cout << "Client sent 'quit'. Closing connection." << endl;
+                close(clientSd);
+                return nullptr;
+            }
+        }
+    }
+
+    close(clientSd);
+    return nullptr;
+}
+
+void Server::cleanUp()
+{
+    if (serverSd >= 0)
+    {
+        close(serverSd);
+        serverSd = -1;
+    }
 }

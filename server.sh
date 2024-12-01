@@ -1,0 +1,1 @@
+g++ -std=c++11 -pthread -o server mainServer.cpp server.cpp
