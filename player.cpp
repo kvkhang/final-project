@@ -14,8 +14,6 @@ int main(int argc, char *argv[])
     const int server_port = 12345;
     char send_string[256];
     char server_name[] = "127.0.0.1";
-    printf("What should I send?\n");
-    scanf("%s", send_string);
     // figure out the IP address
     struct hostent *host = gethostbyname(server_name);
     // set up the data structure
@@ -36,7 +34,12 @@ int main(int argc, char *argv[])
         return -1;
     }
     // write the string
-    int write_result = write(clientSd, send_string, strlen(send_string));
+    while (true)
+    {
+        printf("What should I send?\n");
+        scanf("%s", send_string);
+        int write_result = write(clientSd, send_string, strlen(send_string));
+    }
     // quit
     close(clientSd);
     return 0;
