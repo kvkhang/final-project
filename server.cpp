@@ -122,13 +122,6 @@ void *Server::handleClient(void *arg)
 
         cout << "Received: " << message << endl;
 
-        if (strcmp(buffer, "quit") == 0)
-        {
-            cout << "Client sent 'quit'. Closing connection." << endl;
-            close(clientSd);
-            return nullptr;
-        }
-
         // Call the passed handler function
         handler(clientSd, message);
     }
