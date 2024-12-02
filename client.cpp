@@ -7,12 +7,12 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
-#include <thread>
+#include <pthread.h>
 
 using namespace std;
 
 Client::Client(const std::string &serverAddress, int port)
-    : serverAddress(serverAddress), port(port), clientSd(-1), isRunning(false) {}
+    : serverAddress(serverAddress), port(port), clientSd(-1) {}
 
 Client::~Client()
 {
@@ -59,16 +59,31 @@ bool Client::connectToServer()
 
 void Client::startCommunication()
 {
-    isRunning = true;
+    pthread_t sender, receiver;
+    ThreadData *sendData = new ThreadData{clientSd};
+    ThreadData *receivedData = new ThreadData{clientSd};
 
-    // Start sender and receiver threads
-    senderThread = std::thread(&Client::sendMessages, this);
-    receiverThread = std::thread(&Client::receiveMessages, this);
+    if (pthread_create(&sender, NULL, sendClient, (void *)sendData) != 0)
+    {
+        cerr << "Error: Failed to create thread: " << strerror(errno) << endl;
+        delete sendData;
+        close(clientSd);
+        return;
+    }
+    pthread_detach(sender);
+
+    if (pthread_create(&receiver, NULL, receiveClient, (void *)receivedData) != 0)
+    {
+        cerr << "Error: Failed to create thread: " << strerror(errno) << endl;
+        delete receivedData;
+        close(clientSd);
+        return;
+    }
+    pthread_detach(receiver);
 }
 
 void Client::stopCommunication()
 {
-    isRunning = false;
 
     // Close the socket if it's open
     if (clientSd >= 0)
@@ -76,22 +91,16 @@ void Client::stopCommunication()
         close(clientSd);
         clientSd = -1;
     }
-
-    // Wait for threads to finish
-    if (senderThread.joinable())
-    {
-        senderThread.join();
-    }
-    if (receiverThread.joinable())
-    {
-        receiverThread.join();
-    }
 }
 
-void Client::sendMessages()
+void *Client::sendClient(void *arg)
 {
+    ThreadData *data = (ThreadData *)arg;
+    int clientSd = data->clientSd;
+    delete data; // Free memory after extracting client socket
+
     char message[256];
-    while (isRunning)
+    while (true)
     {
         memset(message, 0, sizeof(message));
         cout << "Enter message (type 'quit' to exit): ";
@@ -99,23 +108,28 @@ void Client::sendMessages()
 
         if (strcmp(message, "quit") == 0)
         {
-            isRunning = false; // Signal threads to stop
-            break;
+            return nullptr;
         }
+
         int write_result = write(clientSd, message, strlen(message));
         if (write_result < 0)
         {
             cerr << "Error: Failed to send message" << endl;
-            isRunning = false;
-            break;
+            return nullptr;
         }
     }
+
+    return nullptr;
 }
 
-void Client::receiveMessages()
+void *Client::receiveClient(void *arg)
 {
+    ThreadData *data = (ThreadData *)arg;
+    int clientSd = data->clientSd;
+    delete data; // Free memory after extracting client socket
+
     char buffer[1024];
-    while (isRunning)
+    while (true)
     {
         memset(buffer, 0, sizeof(buffer));
         int bytesRead = read(clientSd, buffer, sizeof(buffer) - 1);
@@ -126,14 +140,13 @@ void Client::receiveMessages()
         else if (bytesRead == 0)
         {
             cout << "\nServer disconnected." << endl;
-            isRunning = false;
-            break;
+            return nullptr;
         }
         else
         {
             cerr << "Error: Failed to receive message" << endl;
-            isRunning = false;
-            break;
+            return nullptr;
         }
     }
+    return nullptr;
 }

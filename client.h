@@ -2,8 +2,6 @@
 #define CLIENT_H
 
 #include <string>
-#include <thread>
-#include <atomic>
 
 class Client
 {
@@ -19,13 +17,18 @@ private:
     std::string serverAddress;
     int port;
     int clientSd;
-    std::atomic<bool> isRunning; // To control threads
 
-    std::thread senderThread;
-    std::thread receiverThread;
+    static const unsigned int BUF_SIZE = 65535;
 
-    void sendMessages();
-    void receiveMessages();
+    struct ThreadData
+    {
+        int clientSd;
+    };
+
+    static void *sendClient(void *arg);
+    static void *receiveClient(void *arg);
+
+    void cleanUp();
 };
 
 #endif // CLIENT_H

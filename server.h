@@ -3,15 +3,22 @@
 
 #include <string>
 #include <netinet/in.h> // sockaddr_in
+#include <functional>
 
 class Server
 {
 public:
+    using MessageHandler = std::function<void(int clientSd, const std::string &)>;
+
+    // Constructor, initializing with address, port, and backlog size (default is 5)
     Server(const std::string &address, int port, int backlog = 5);
     ~Server();
 
+    // Initializes the server (creates socket, binds, listens)
     bool initialize();
-    void start();
+
+    // Starts the server, accepting clients and using a handler function for each client
+    void start(MessageHandler handler);
 
 private:
     std::string serverAddress;
@@ -22,13 +29,17 @@ private:
 
     static const unsigned int BUF_SIZE = 65535;
 
+    // Thread data structure for passing client socket to the handler
     struct ThreadData
     {
         int clientSd;
+        MessageHandler handler;
     };
 
+    // Handles a single client connection
     static void *handleClient(void *arg);
 
+    // Cleans up resources (closes the server socket)
     void cleanUp();
 };
 

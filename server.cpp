@@ -57,7 +57,7 @@ bool Server::initialize()
     return true;
 }
 
-void Server::start()
+void Server::start(MessageHandler handler)
 {
     while (true)
     {
@@ -76,7 +76,7 @@ void Server::start()
 
         // Create a new thread to handle the client
         pthread_t thread;
-        ThreadData *data = new ThreadData{clientSd};
+        ThreadData *data = new ThreadData{clientSd, handler};
 
         if (pthread_create(&thread, NULL, handleClient, (void *)data) != 0)
         {
@@ -94,66 +94,43 @@ void *Server::handleClient(void *arg)
 {
     ThreadData *data = (ThreadData *)arg;
     int clientSd = data->clientSd;
-    delete data; // Free memory after extracting client socket
+    MessageHandler handler = data->handler;
+    delete data; // Free memory after extracting client socket and handler
 
     char buffer[BUF_SIZE];
-    memset(buffer, 0, BUF_SIZE);
-
-    fd_set readfds;
-    struct timeval timeout;
 
     // Handle client communication
     while (true)
     {
-        FD_ZERO(&readfds);
-        FD_SET(clientSd, &readfds);
-
-        timeout.tv_sec = 5; // Set a timeout of 5 seconds
-        timeout.tv_usec = 0;
-
-        int activity = select(clientSd + 1, &readfds, NULL, NULL, &timeout);
-        if (activity < 0)
+        memset(buffer, 0, BUF_SIZE);
+        int bytesRead = read(clientSd, buffer, BUF_SIZE);
+        if (bytesRead < 0)
         {
-            cerr << "Error: select failed: " << strerror(errno) << endl;
+            cerr << "Error: Failed to read from client: " << strerror(errno) << endl;
+            close(clientSd);
+            return nullptr;
+        }
+        else if (bytesRead == 0)
+        {
+            // Client disconnected
+            cout << "Client disconnected." << endl;
             close(clientSd);
             return nullptr;
         }
 
-        if (activity == 0)
+        string message(buffer); // Convert buffer to string
+
+        cout << "Received: " << message << endl;
+
+        if (strcmp(buffer, "quit") == 0)
         {
-            // Timeout occurred, no data received
-            cout << "Timeout occurred, no data received." << endl;
-            continue;
+            cout << "Client sent 'quit'. Closing connection." << endl;
+            close(clientSd);
+            return nullptr;
         }
 
-        // Check if the client socket is ready for reading
-        if (FD_ISSET(clientSd, &readfds))
-        {
-            memset(buffer, 0, BUF_SIZE);
-            int bytesRead = read(clientSd, buffer, BUF_SIZE);
-            if (bytesRead < 0)
-            {
-                cerr << "Error: Failed to read from client: " << strerror(errno) << endl;
-                close(clientSd);
-                return nullptr;
-            }
-            else if (bytesRead == 0)
-            {
-                // Client disconnected
-                cout << "Client disconnected." << endl;
-                close(clientSd);
-                return nullptr;
-            }
-
-            cout << "Received: " << buffer << endl;
-
-            if (strcmp(buffer, "quit") == 0)
-            {
-                cout << "Client sent 'quit'. Closing connection." << endl;
-                close(clientSd);
-                return nullptr;
-            }
-        }
+        // Call the passed handler function
+        handler(clientSd, message);
     }
 
     close(clientSd);

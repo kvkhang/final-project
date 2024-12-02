@@ -1,29 +1,27 @@
 #include "server.h"
 #include <iostream>
-#include <cstdlib>
+#include <cstring>
+#include <unistd.h>
 
-using namespace std;
-
-int main(int argc, char *argv[])
+// Message handler function
+void handleMessage(int clientSd, const std::string &message)
 {
-    if (argc != 3)
-    {
-        cerr << "Usage: " << argv[0] << " <server_address> <port>" << endl;
-        return -1;
-    }
+    std::cout << "Handling message from client: " << message << std::endl;
+    // Send a response back to the client
+    const char *response = "Message received!";
+    write(clientSd, response, strlen(response));
+}
 
-    string serverAddress = argv[1];
-    int port = atoi(argv[2]);
-
-    Server server(serverAddress, port);
-
+int main()
+{
+    Server server("127.0.0.1", 12345);
     if (!server.initialize())
     {
-        cerr << "Error: Failed to initialize server." << endl;
         return -1;
     }
 
-    server.start();
+    // Start the server, passing the message handler
+    server.start(handleMessage);
 
     return 0;
 }
