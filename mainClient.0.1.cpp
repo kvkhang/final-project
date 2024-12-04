@@ -127,6 +127,14 @@ int main(int argc, char const *argv[])
         }
         else if (message == "help") // Explains all functions
         {
+            cout << "Available Commands: (ensure no spaces after commands)\n"
+                 << "-------------------------\n"
+                 << "list   - View all available games.\n"
+                 << "create - Create a new game. You will be prompted to name the game (no spaces)\n"
+                 << "join   - Join an existing game. You will be prompted to specify the game's name\n"
+                 << "quit   - Disconnect and exit the program.\n"
+                 << "help   - Display this help message.\n"
+                 << "-------------------------\n";
         }
         else
         {
