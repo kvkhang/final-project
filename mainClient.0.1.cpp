@@ -4,6 +4,7 @@
 #include <cstdlib> // For std::stoi
 #include <vector>
 #include <unordered_set>
+#include <unistd.h>
 
 using namespace std;
 
@@ -216,7 +217,7 @@ int main(int argc, char const *argv[])
             while (true)
             {
                 hand = client.receiveMessage();
-                cout << "Current hand: " + hand << endl;
+                cout << "\nCurrent hand: " + hand << endl;
                 if (playerNumber == 1)
                 {
                     // player guessing
@@ -246,6 +247,9 @@ int main(int argc, char const *argv[])
                         cout << "You have guessed incorrectly and received a(n) " << outcome << endl;
                     }
 
+                    hand = client.receiveMessage();
+                    cout << "\nCurrent hand: " + hand << endl;
+
                     // waits for other player to guess
                     cout << "Waiting on " << oppUser << endl;
                     response = client.receiveMessage();
@@ -256,6 +260,8 @@ int main(int argc, char const *argv[])
                     if (outcome == "T")
                     {
                         cout << "Your " + response + " card has been taken." << endl;
+                    } else {
+                        cout << oppUser + " has drawn a card." << endl;
                     }
                 }
                 else if (playerNumber == 2)
@@ -274,6 +280,9 @@ int main(int argc, char const *argv[])
                     {
                         cout << oppUser + " has drawn a card." << endl;
                     }
+                    sleep(1);
+                    hand = client.receiveMessage();
+                    cout << "\nCurrent hand: " + hand << endl;
 
                     // player guessing
                     cout << "Please input guess: \n"
@@ -296,6 +305,9 @@ int main(int argc, char const *argv[])
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
+                    } else 
+                    {
+                        cout << "You have guessed incorrectly and received a(n) " << outcome << endl;
                     }
                 }
             }
@@ -304,8 +316,8 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-// TODO: fix guess validation (10 not recognized)
-// TODO: fix 2nd player drawing card message
-// TODO: fix first player hand becoming F
+// TODO: fix possible hand rerolling
+    // player 1 drawing when guessing correctly
+    // fixed: hands aren't rerolling. there are two different hands for player each player
 // TODO: fix scoring/pair finding
 // TODO: fix random num generator

@@ -39,6 +39,7 @@ string playerHand(unordered_map<int, int> &hand, const string &playerName, const
 string intToString(const int &handNum);
 int guessToInt(const string &guess);
 
+
 unordered_map<int, string> players;
 vector<Game> openGames;
 vector<Game> closedGames;
@@ -347,7 +348,7 @@ void game(int clientSd, vector<string> &message)
     vector<Game>::iterator it;
     if (player == 1)
     {
-        it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+        it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game)
                      { return gameName == game.name; });
     }
     if (player == 2)
@@ -361,6 +362,8 @@ void game(int clientSd, vector<string> &message)
     // handling guessing
     if (player == 1)
     {
+        cout << currentGame.player1 << " guessed: " << guess << endl;
+        cout << currentGame.player2 << " has: " << currentGame.player2_hand[guessNum] << " " << guess << " cards" << endl;
         // player 1 guesses correctly
         if (currentGame.player2_hand[guessNum] > 0)
         {
@@ -393,11 +396,13 @@ void game(int clientSd, vector<string> &message)
             sleep(1);
             serverWrite(currentGame.player2_Sd, "F");
         }
-    }
+    } 
 
     // player 2 is guessing
     if (player == 2)
     {
+        cout << currentGame.player2 << " guessed: " << guess << endl;
+        cout << currentGame.player1 << " has: " << currentGame.player1_hand[guessNum] << " " << guess << " cards" << endl;
         // player 2 guesses correctly
         if (currentGame.player1_hand[guessNum] > 0)
         {
@@ -449,18 +454,12 @@ void game(int clientSd, vector<string> &message)
         }
     }
 
-    // send client's their hand
-    if (player == 1)
-    {
+    // send clients their hand
         serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1, currentGame.player2,
                                                        currentGame.player1_score, currentGame.player2_score));
-    }
 
-    if (player == 2)
-    {
         serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2, currentGame.player1,
                                                        currentGame.player2_score, currentGame.player1_score));
-    }
 }
 
 string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore)
@@ -523,7 +522,11 @@ int guessToInt(const string &guess)
         return 1;
     }
 
-    return -1;
+    try {
+        return stoi(guess);
+    } catch (const invalid_argument &e) {
+        return -1;
+    }
 }
 
 void serverWrite(int clientSd, const string &message)
