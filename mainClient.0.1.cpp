@@ -178,9 +178,22 @@ int main(int argc, char const *argv[])
         }
         else if (message == "quit") // Quits game entirely
         {
-            cout << "<Server> Goodbye!" << endl;
-            client.disconnect();
-            break;
+            cout << "\nYou have chosen to exit the game!" << endl;
+            cout << "\nEnter Y to confirm your action\nOtherwise will return to the game: ";
+            string confirm;
+            getline(cin, confirm);
+            if (confirm == "Y" || confirm == "y") 
+            {
+                client.sendMessage("exit " + username); // Notify the server
+                response = client.receiveMessage();
+                cout << response << endl;
+                client.disconnect();
+                break;
+            } 
+            else 
+            {
+                cout << "Returning to the game." << endl;
+            }
         }
         else if (message == "help") // Explains all functions
         {

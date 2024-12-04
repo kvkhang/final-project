@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
 
     // Start the server, passing the message handler
     server.start(handleMessage);
-
+    
     return 0;
 }
 
@@ -95,6 +95,7 @@ void handleMessage(int clientSd, const string &message)
     }
     else if (tokens[0] == "exit")
     {
+        exitGame(clientSd, tokens);
     }
     else if (tokens[0] == "gamestart")
     {
@@ -214,6 +215,30 @@ void joinGame(int clientSd, vector<string> &message)
 }
 void exitGame(int clientSd, vector<string> &message)
 {
+    string username = message[1];
+    // removing user from openGames vec
+    auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game) {
+        return game.player1 == username || game.player2 == username;
+    });
+
+    if (it != openGames.end()) {
+        openGames.erase(it);
+    }
+
+    // removing user from closedGames vec
+    it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game) {
+        return game.player1 == username || game.player2 == username;
+    });
+
+    if (it != closedGames.end()) {
+        closedGames.erase(it);
+    }
+
+    // unregistering player
+
+    // goodbye message for client
+    serverWrite(clientSd, "\n------------------------------------\n");
+    serverWrite(clientSd, "Thank you for playing Go Fish!\nCredits: Lagesse, Legacy, L-L-La Guessy?\n");
 }
 void unregisterPlayer(int clientSd, vector<string> &message)
 {
