@@ -261,8 +261,6 @@ void gameStart(int clientSd, vector<string> &message)
 
     for (int i = 0; i < 7; i++)
     {
-        bool isZero1 = true;
-        bool isZero2 = true;
         int random = 0;
         while (true)
         {
@@ -270,6 +268,18 @@ void gameStart(int clientSd, vector<string> &message)
             if (currentGame.pool[random] != 0)
             {
                 currentGame.pool[random]--;
+                currentGame.player1_hand[random]++;
+                break;
+            }
+        }
+        while (true)
+        {
+            random = 1 + rand() % 13;
+            if (currentGame.pool[random] != 0)
+            {
+                currentGame.pool[random]--;
+                currentGame.player2_hand[random]++;
+                break;
             }
         }
     }
@@ -284,7 +294,7 @@ void gameStart(int clientSd, vector<string> &message)
     }
 }
 
-void game()
+void game(int clientSd, vector<string> &message)
 {
 }
 
