@@ -90,6 +90,14 @@ int main(int argc, char const *argv[])
     string response;
     int playerNumber;
 
+    cout << "\nWelcome to the game of Go Fish!" << endl;
+    cout << "\nHow to Start:" << endl;
+    cout << "  - enter a username" << endl;
+    cout << "  - enter a command: list, create, join, quit" << endl;
+    cout << "  - follow the prompts" << endl;
+    cout << "  - enjoy the game!" << endl;
+    cout << "\nType 'help' for more information.\n" << endl;
+
     while (true)
     {
         cout << "Please input username: " << endl;
