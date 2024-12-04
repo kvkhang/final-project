@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
     }
 
     string message;
-
+    bool gameStart = false;
     while (true)
     {
         cout << "<" << username << "> ";
@@ -67,19 +67,57 @@ int main(int argc, char const *argv[])
         // Each command will start related protocol in server
         if (message == "list")
         {
-            
+            client.sendMessage("list");
+            response = client.receiveMessage();
+            cout << response << endl;
         }
         else if (message == "create")
         {
+            cout << "<Server> What would you like to name the game?\n"
+                 << "<" << username << "> ";
+            getline(cin, message);
+            msgToServer = "create " + message;
+            client.sendMessage(msgToServer);
+            response = client.receiveMessage();
+            if (response == "F")
+            {
+                cout << "Failed to create game. Try again." << endl;
+            }
+            else if (response == "S")
+            {
+                cout << "No spaces allowed. Try again." << endl;
+            }
+            else
+            {
+                gameStart = true;
+            }
         }
         else if (message == "join")
         {
-        }
-        else if (message == "exit")
-        {
+            cout << "<Server> Which game would you like to join?\n"
+                 << "<" << username << "> ";
+            getline(cin, message);
+            msgToServer = "join " + message;
+            client.sendMessage(msgToServer);
+            response = client.receiveMessage();
+            if (response == "F")
+            {
+                cout << "Failed to join game. Try again." << endl;
+            }
+            else if (response == "S")
+            {
+                cout << "No spaces allowed. Try again." << endl;
+            }
+            else
+            {
+                gameStart = true;
+            }
         }
         else if (message == "quit")
         {
+            cout << "<Server> Goodbye!" << endl;
+            client.disconnect();
+            break;
         }
         else if (message == "help")
         {
@@ -87,6 +125,16 @@ int main(int argc, char const *argv[])
         else
         {
             cout << "\nInvalid Command. Type 'help' for commands." << endl;
+        }
+        // Game logic goes here
+        if (gameStart)
+        {
+            cout << "Waiting to connect..." << endl;
+            string response = client.receiveMessage();
+            cout << "Game Start! " << username << " vs. " << endl;
+            while (true)
+            {
+            }
         }
     }
 

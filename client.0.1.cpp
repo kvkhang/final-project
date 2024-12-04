@@ -90,7 +90,7 @@ std::string Client::receiveMessage()
         return "";
     }
 
-    char buffer[1024];
+    char buffer[65535];
     memset(buffer, 0, sizeof(buffer));
 
     int bytesRead = read(clientSd, buffer, sizeof(buffer) - 1);

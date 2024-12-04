@@ -12,7 +12,7 @@ using namespace std;
 void handleMessage(int clientSd, const string &message);
 vector<string> tokenizer(string message);
 void registerPlayer(int clientSd, vector<string> &message);
-void listGames(int clientSd, vector<string> &message);
+void listGames(int clientSd);
 void createGame(int clientSd, vector<string> &message);
 void joinGame(int clientSd, vector<string> &message);
 void exitGame(int cliendSd, vector<string> &message);
@@ -20,6 +20,7 @@ void unregisterPlayer(int clientSd, vector<string> &message);
 
 vector<string> players;
 vector<string> openGames;
+vector<string> closedGames;
 
 int main(int argc, char const *argv[])
 {
@@ -63,20 +64,28 @@ void handleMessage(int clientSd, const string &message)
     {
         registerPlayer(clientSd, tokens);
     }
+    else if (tokens[0] == "list")
+    {
+        listGames(clientSd);
+    }
     else if (tokens[0] == "create")
     {
+        createGame(clientSd, tokens);
     }
     else if (tokens[0] == "join")
-        {
-        }
-        else if (tokens[0] == "exit")
-        {
-        }
-        else if (tokens[0] == "quit")
-        {
-        }
+    {
+        joinGame(clientSd, tokens);
+    }
+    else if (tokens[0] == "exit")
+    {
+    }
+    else if (tokens[0] == "quit")
+    {
+    }
+    else if (tokens[0] == "game")
+    {
+    }
 }
-
 
 vector<string> tokenizer(string message)
 {
@@ -103,7 +112,6 @@ vector<string> tokenizer(string message)
 
 void registerPlayer(int clientSd, vector<string> &message)
 {
-    cout << "Registering " << clientSd << endl;
     auto it = find(players.begin(), players.end(), message[1]);
     if (it == players.end()) // Player not found
     {
@@ -118,15 +126,66 @@ void registerPlayer(int clientSd, vector<string> &message)
     }
 }
 
-void listGames(int clientSd, vector<string> &message)
+void listGames(int clientSd)
 {
-
+    string message = "Open:";
+    for (string x : openGames)
+    {
+        message += " (" + x + ")";
+    }
+    message += "\nClosed:";
+    for (string x : closedGames)
+    {
+        message += " (" + x + ")";
+    }
+    write(clientSd, message.c_str(), message.size());
 }
 void createGame(int clientSd, vector<string> &message)
 {
+    string name;
+    if (message.size() > 2)
+    {
+        char response = 'S'; // Failure
+        write(clientSd, &response, sizeof(response));
+        return;
+    }
+    name = message[1];
+    auto it = find(openGames.begin(), openGames.end(), name);
+    if (it == openGames.end()) // Player not found
+    {
+        openGames.push_back(name);
+        char response = 'T'; // Success
+        write(clientSd, &response, sizeof(response));
+    }
+    else
+    {
+        char response = 'F'; // Failure
+        write(clientSd, &response, sizeof(response));
+    }
 }
 void joinGame(int clientSd, vector<string> &message)
 {
+    string name;
+    if (message.size() > 2)
+    {
+        char response = 'S'; // Failure
+        write(clientSd, &response, sizeof(response));
+        return;
+    }
+    name = message[1];
+    auto it = find(openGames.begin(), openGames.end(), name);
+    if (it != openGames.end()) // Player not found
+    {
+        openGames.erase(remove(openGames.begin(), openGames.end(), name), openGames.end());
+        closedGames.push_back(name);
+        char response = 'T'; // Success
+        write(clientSd, &response, sizeof(response));
+    }
+    else
+    {
+        char response = 'F'; // Failure
+        write(clientSd, &response, sizeof(response));
+    }
 }
 void exitGame(int cliendSd, vector<string> &message)
 {
