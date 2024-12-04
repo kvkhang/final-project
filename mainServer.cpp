@@ -17,6 +17,8 @@ struct Game
     int player1_Sd = 0;
     string player2 = "";
     int player2_Sd = 0;
+    int player1_score = 0;
+    int player2_score = 0;
     unordered_map<int, int> pool;
     unordered_map<int, int> player1_hand;
     unordered_map<int, int> player2_hand;
@@ -33,8 +35,9 @@ void exitGame(int clientSd, vector<string> &message);
 void gameStart(int clientSd, vector<string> &message);
 void unregisterPlayer(int clientSd, vector<string> &message);
 void game(int clientSd, vector<string> &message);
-string playerHand(unordered_map<int, int> &hand);
+string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore);
 string intToString(const int &handNum);
+int guessToInt(const string &guess);
 
 vector<string> players;
 vector<Game> openGames;
@@ -298,16 +301,16 @@ void gameStart(int clientSd, vector<string> &message)
     // send client's their hand
     if (player == 1)
     {
-        serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand));
-        cout << "\nplayer 1 hand: " << playerHand(currentGame.player1_hand) << endl;
+        serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1,
+                                                       currentGame.player2, currentGame.player1_score, currentGame.player2_score));
     }
 
     sleep(1);
 
     if (player == 2)
     {
-        serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand));
-        cout << "player 2 hand: " << playerHand(currentGame.player2_hand) << endl;
+        serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2,
+                                                       currentGame.player1, currentGame.player2_score, currentGame.player1_score));
     }
 }
 
@@ -329,23 +332,114 @@ void game(int clientSd, vector<string> &message)
                      { return gameName == game.name; });
     }
     Game &currentGame = *it;
-    while (!endGame)
+    int guessNum = guessToInt(guess);
+
+    // handling guessing
+    if (player == 1)
     {
-
-        // send client's their hand
-        if (player == 1)
+        // player 1 guesses correctly
+        if (currentGame.player2_hand[guessNum] > 0)
         {
-            serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand));
+            // updates player's hands
+            currentGame.player2_hand[guessNum]--;
+            currentGame.player1_hand[guessNum]++;
+            serverWrite(currentGame.player1_Sd, "T");
+            sleep(1);
+            serverWrite(currentGame.player2_Sd, guess);
+            sleep(1);
+            serverWrite(currentGame.player2_Sd, "T");
         }
-
-        if (player == 2)
+        // player 1 guesses incorrectly and draws a card
+        else
         {
-            serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand));
+            int random = 0;
+            while (true)
+            {
+                random = rand() % 13 + 1;
+                if (currentGame.pool[random] != 0)
+                {
+                    currentGame.pool[random]--;
+                    currentGame.player1_hand[random]++;
+                    break;
+                }
+            }
+            serverWrite(currentGame.player1_Sd, intToString(random));
+            sleep(1);
+            serverWrite(currentGame.player2_Sd, guess);
+            sleep(1);
+            serverWrite(currentGame.player2_Sd, "F");
         }
+    }
+
+    // player 2 is guessing
+    if (player == 2)
+    {
+        // player 2 guesses correctly
+        if (currentGame.player1_hand[guessNum] > 0)
+        {
+            // updates player's hands
+            currentGame.player1_hand[guessNum]--;
+            currentGame.player2_hand[guessNum]++;
+            serverWrite(currentGame.player2_Sd, "T");
+            sleep(1);
+            serverWrite(currentGame.player1_Sd, guess);
+            sleep(1);
+            serverWrite(currentGame.player1_Sd, "T");
+        }
+        // player 2 guesses incorrectly and draws a card
+        else
+        {
+            int random = 0;
+            while (true)
+            {
+                random = rand() % 13 + 1;
+                if (currentGame.pool[random] != 0)
+                {
+                    currentGame.pool[random]--;
+                    currentGame.player2_hand[random]++;
+                    break;
+                }
+            }
+            serverWrite(currentGame.player2_Sd, intToString(random));
+            sleep(1);
+            serverWrite(currentGame.player1_Sd, guess);
+            sleep(1);
+            serverWrite(currentGame.player1_Sd, "F");
+        }
+    }
+
+    sleep(1);
+
+    // checks for new pairs and updates scores
+    for (int i = 1; i <= 13; i++)
+    {
+        if (currentGame.player1_hand[i] > 1)
+        {
+            currentGame.player1_score++;
+            currentGame.player1_hand[i] -= 2;
+        }
+        if (currentGame.player2_hand[i] > 1)
+        {
+            currentGame.player2_score++;
+            currentGame.player2_hand[i] -= 2;
+        }
+    }
+
+    // send client's their hand
+    if (player == 1)
+    {
+        serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1, currentGame.player2,
+                                                       currentGame.player1_score, currentGame.player2_score));
+    }
+
+    if (player == 2)
+    {
+        serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2, currentGame.player1,
+                                                       currentGame.player2_score, currentGame.player1_score));
     }
 }
 
-string playerHand(unordered_map<int, int> &hand)
+string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore)
 {
     string result;
     for (int i = 1; i <= 13; i++)
@@ -358,6 +452,7 @@ string playerHand(unordered_map<int, int> &hand)
             }
         }
     }
+    result += "\n" + playerName + ": " + to_string(playerScore) + "\n" + oppName + ": " + to_string(oppScore);
     return result;
 }
 
@@ -380,6 +475,31 @@ string intToString(const int &handNum)
         return "ace";
     }
     return to_string(handNum);
+}
+
+int guessToInt(const string &guess)
+{
+    if (guess == "king")
+    {
+        return 13;
+    }
+
+    if (guess == "queen")
+    {
+        return 12;
+    }
+
+    if (guess == "jack")
+    {
+        return 11;
+    }
+
+    if (guess == "ace")
+    {
+        return 1;
+    }
+
+    return -1;
 }
 
 void serverWrite(int clientSd, const string &message)

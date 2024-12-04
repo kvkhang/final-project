@@ -196,7 +196,6 @@ int main(int argc, char const *argv[])
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
             string oppUser = client.receiveMessage();
-            cout << playerNumber << endl;
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;
@@ -229,6 +228,10 @@ int main(int argc, char const *argv[])
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
                     }
+                    else
+                    {
+                        cout << "You have guessed incorrectly and received a(n) " << outcome << endl;
+                    }
 
                     // waits for other player to guess
                     cout << "Waiting on " << oppUser << endl;
@@ -254,6 +257,10 @@ int main(int argc, char const *argv[])
                     {
                         cout << "Your " + response + " card has been taken." << endl;
                     }
+                    else
+                    {
+                        cout << oppUser + " has drawn a card." << endl;
+                    }
 
                     // player guessing
                     cout << "Please input guess: \n"
@@ -268,7 +275,7 @@ int main(int argc, char const *argv[])
                     }
 
                     // sending guess to server
-                    msgToServer = "game " + gameName + " " + to_string(playerNumber) + " " + input;
+                    msgToServer = "game " + input + " " + gameName + " " + to_string(playerNumber);
                     client.sendMessage(msgToServer);
 
                     // server giving result
@@ -284,3 +291,8 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
+// TODO: fix guess validation (10 not recognized)
+// TODO: fix 2nd player drawing card message
+// TODO: fix first player hand becoming F
+// TODO: fix scoring/pair finding
+// TODO: fix random num generator
