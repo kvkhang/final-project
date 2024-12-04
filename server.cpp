@@ -57,7 +57,7 @@ bool Server::initialize()
     return true;
 }
 
-void Server::start(MessageHandler handler)
+void Server::start(MessageHandler handler, DeleteHandler deleteHandler)
 {
     while (true)
     {
@@ -76,7 +76,7 @@ void Server::start(MessageHandler handler)
 
         // Create a new thread to handle the client
         pthread_t thread;
-        ThreadData *data = new ThreadData{clientSd, handler};
+        ThreadData *data = new ThreadData{clientSd, handler, deleteHandler};
 
         if (pthread_create(&thread, NULL, handleClient, (void *)data) != 0)
         {
@@ -95,6 +95,7 @@ void *Server::handleClient(void *arg)
     ThreadData *data = (ThreadData *)arg;
     int clientSd = data->clientSd;
     MessageHandler handler = data->handler;
+    DeleteHandler deleteHandler = data->deleteHandler;
     delete data; // Free memory after extracting client socket and handler
 
     char buffer[BUF_SIZE];
@@ -114,6 +115,7 @@ void *Server::handleClient(void *arg)
         {
             // Client disconnected
             cout << "Client disconnected." << endl;
+            deleteHandler(clientSd);
             close(clientSd);
             return nullptr;
         }

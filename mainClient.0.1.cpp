@@ -55,6 +55,11 @@ bool validateGuess(const string &guess)
     return validGuesses.count(num);
 }
 
+void quitHelper(Client &client, const string &username)
+{
+    cout << "\nYou have chosen to exit the game!" << endl;
+    client.disconnect();
+}
 int main(int argc, char const *argv[])
 {
     if (argc != 3)
@@ -90,9 +95,18 @@ int main(int argc, char const *argv[])
     string response;
     int playerNumber;
 
+    cout << "\nWelcome to the game of LaGuessy!" << endl;
+    cout << "CSS 432 rendition of Go Fish" << endl;
+    cout << "\nHow to Start:" << endl;
+    cout << "  - enter a username" << endl;
+    cout << "  - enter a command: list, create, join, quit" << endl;
+    cout << "  - follow the prompts" << endl;
+    cout << "  - enjoy the game!" << endl;
+    cout << "\nType 'help' for more information.\n" << endl;
+
     while (true)
     {
-        cout << "Please input username: " << endl;
+        cout << "Please input username: ";
         getline(cin, username);
         msgToServer = "register " + username;
         client.sendMessage(msgToServer);
@@ -170,8 +184,7 @@ int main(int argc, char const *argv[])
         }
         else if (message == "quit") // Quits game entirely
         {
-            cout << "<Server> Goodbye!" << endl;
-            client.disconnect();
+            quitHelper(client, username);
             break;
         }
         else if (message == "help") // Explains all functions
