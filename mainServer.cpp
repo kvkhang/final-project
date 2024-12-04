@@ -27,6 +27,7 @@ void joinGame(int clientSd, vector<string> &message);
 void exitGame(int clientSd, vector<string> &message);
 void gameStart(int clientSd, vector<string> &message);
 void unregisterPlayer(int clientSd, vector<string> &message);
+void game();
 
 vector<string> players;
 vector<Game> openGames;
@@ -86,9 +87,6 @@ void handleMessage(int clientSd, const string &message)
         joinGame(clientSd, tokens);
     }
     else if (tokens[0] == "exit")
-    {
-    }
-    else if (tokens[0] == "quit")
     {
     }
     else if (tokens[0] == "gamestart")

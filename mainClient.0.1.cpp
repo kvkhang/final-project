@@ -3,8 +3,57 @@
 #include <string>
 #include <cstdlib> // For std::stoi
 #include <vector>
+#include <unordered_set>
 
 using namespace std;
+
+static unordered_set<int> validGuesses{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+
+int guessToInt(const string &guess)
+{
+    if (guess == "king")
+    {
+        return 13;
+    }
+
+    if (guess == "queen")
+    {
+        return 12;
+    }
+
+    if (guess == "jack")
+    {
+        return 11;
+    }
+
+    if (guess == "ace")
+    {
+        return 1;
+    }
+
+    return -1;
+}
+
+bool validateGuess(const string &guess)
+{
+    int num = 0;
+    if (guess.length() > 1)
+    {
+        num = guessToInt(guess);
+    }
+    else
+    {
+        try
+        {
+            num = stoi(guess);
+        }
+        catch (const invalid_argument &e)
+        {
+            return false;
+        }
+    }
+    return validGuesses.count(num);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -134,7 +183,7 @@ int main(int argc, char const *argv[])
                  << "join   - Join an existing game. You will be prompted to specify the game's name\n"
                  << "quit   - Disconnect and exit the program.\n"
                  << "help   - Display this help message.\n"
-                 << "-------------------------\n";
+                 << "-------------------------" << endl;
         }
         else
         {
@@ -147,9 +196,45 @@ int main(int argc, char const *argv[])
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
             string oppUser = client.receiveMessage();
+            cout << playerNumber << endl;
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
+            string input;
+            string outcome;
             while (true)
             {
+                if (playerNumber == 1)
+                {
+                    cout << "Please input guess: \n"
+                         << "<" << username << "> ";
+                    getline(cin, input);
+                    while (!validateGuess(input))
+                    {
+                        cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
+                        cout << "Please input guess: \n"
+                             << "<" << username << "> ";
+                        getline(cin, input);
+                    }
+
+                    msgToServer = "game " + gameName + " " + to_string(playerNumber) + " " + input;
+                    client.sendMessage(msgToServer);
+                    outcome = client.receiveMessage();
+                    if (outcome == "T")
+                    {
+                        cout << "You have guessed correctly and received a(n) " << input << endl;
+                    }
+                }
+                else if (playerNumber == 2)
+                {
+                    cout << "Waiting on " << oppUser << endl;
+                    response = client.receiveMessage();
+                    cout << oppUser << " has guessed: " << response << endl;
+                    outcome = client.receiveMessage();
+                    // other player guesses correctly and takes your card
+                    if (outcome == "T")
+                    {
+                        cout << "Your " + response + " card has been taken." << endl;
+                    }
+                }
             }
         }
     }
