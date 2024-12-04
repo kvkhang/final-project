@@ -33,6 +33,8 @@ void exitGame(int clientSd, vector<string> &message);
 void gameStart(int clientSd, vector<string> &message);
 void unregisterPlayer(int clientSd, vector<string> &message);
 void game(int clientSd, vector<string> &message);
+string playerHand(unordered_map<int, int> &hand);
+string intToString(const int &handNum);
 
 vector<string> players;
 vector<Game> openGames;
@@ -264,7 +266,7 @@ void gameStart(int clientSd, vector<string> &message)
         int random = 0;
         while (true)
         {
-            random = 1 + rand() % 13;
+            random = rand() % 13 + 1;
             if (currentGame.pool[random] != 0)
             {
                 currentGame.pool[random]--;
@@ -274,7 +276,7 @@ void gameStart(int clientSd, vector<string> &message)
         }
         while (true)
         {
-            random = 1 + rand() % 13;
+            random = rand() % 13 + 1;
             if (currentGame.pool[random] != 0)
             {
                 currentGame.pool[random]--;
@@ -283,6 +285,7 @@ void gameStart(int clientSd, vector<string> &message)
             }
         }
     }
+    cout << "\n";
 
     if (player == 1)
     {
@@ -292,10 +295,90 @@ void gameStart(int clientSd, vector<string> &message)
     {
         serverWrite(currentGame.player1_Sd, currentGame.player2);
     }
+
+    // send client's their hand
+    if (player == 1)
+    {
+        serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand));
+        cout << "player 1 hand: " << playerHand(currentGame.player1_hand) << endl;
+    }
+
+    if (player == 2)
+    {
+        serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand));
+        cout << "player 2 hand: " << playerHand(currentGame.player2_hand) << endl;
+    }
 }
 
 void game(int clientSd, vector<string> &message)
 {
+    bool endGame = false;
+    string guess = message[1];
+    string gameName = message[2];
+    int player = stoi(message[3]);
+    vector<Game>::iterator it;
+    if (player == 1)
+    {
+        it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+                     { return gameName == game.name; });
+    }
+    if (player == 2)
+    {
+        it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game)
+                     { return gameName == game.name; });
+    }
+    Game &currentGame = *it;
+    while (!endGame)
+    {
+
+        // send client's their hand
+        if (player == 1)
+        {
+            serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand));
+        }
+
+        if (player == 2)
+        {
+            serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand));
+        }
+    }
+}
+
+string playerHand(unordered_map<int, int> &hand)
+{
+    string result;
+    for (int i = 1; i <= 13; i++)
+    {
+        if (hand[i] > 0)
+        {
+            for (int j = 0; j < hand[i]; j++)
+            {
+                result += intToString(i) + " ";
+            }
+        }
+    }
+    return result;
+}
+
+string intToString(const int &handNum)
+{
+    if (handNum == 13)
+    {
+        return "king";
+    }
+    if (handNum == 12)
+    {
+        return "queen";
+    }
+    if (handNum == 11)
+    {
+        return "jack";
+    }
+    if (handNum == 1)
+    {
+        return "ace";
+    }
+    return to_string(handNum);
 }
 
 void serverWrite(int clientSd, const string &message)

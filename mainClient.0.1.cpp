@@ -220,7 +220,7 @@ int main(int argc, char const *argv[])
                         getline(cin, input);
                     }
                     // sends guess to server
-                    msgToServer = "game " + gameName + " " + to_string(playerNumber) + " " + input;
+                    msgToServer = "game " + input + " " + gameName + " " + to_string(playerNumber);
                     client.sendMessage(msgToServer);
 
                     // server sends outcome to guess
