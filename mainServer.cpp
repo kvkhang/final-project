@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
 
     // Start the server, passing the message handler
     server.start(handleMessage);
-    
+
     return 0;
 }
 
@@ -235,13 +235,21 @@ void exitGame(int clientSd, vector<string> &message)
     }
 
     // unregistering player
+    vector<string> unregisterMessage = {"unregister", username};
+    unregisterPlayer(clientSd, unregisterMessage);
 
     // goodbye message for client
     serverWrite(clientSd, "\n------------------------------------\n");
-    serverWrite(clientSd, "Thank you for playing Go Fish!\nCredits: Lagesse, Legacy, L-L-La Guessy?\n");
+    serverWrite(clientSd, "Thank you for playing LaGuessy!\nCredits: Lagesse, Legacy, L-L-La Guessy?\n");
 }
 void unregisterPlayer(int clientSd, vector<string> &message)
 {
+    string username = message[1];
+    auto it = find(players.begin(), players.end(), username);
+    if (it != players.end())
+    {
+        players.erase(it);
+    }
 }
 void gameStart(int clientSd, vector<string> &message)
 {

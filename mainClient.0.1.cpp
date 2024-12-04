@@ -90,7 +90,8 @@ int main(int argc, char const *argv[])
     string response;
     int playerNumber;
 
-    cout << "\nWelcome to the game of Go Fish!" << endl;
+    cout << "\nWelcome to the game of LaGuessy!" << endl;
+    cout << "CSS 432 rendition of Go Fish" << endl;
     cout << "\nHow to Start:" << endl;
     cout << "  - enter a username" << endl;
     cout << "  - enter a command: list, create, join, quit" << endl;
@@ -100,7 +101,7 @@ int main(int argc, char const *argv[])
 
     while (true)
     {
-        cout << "Please input username: " << endl;
+        cout << "Please input username: ";
         getline(cin, username);
         msgToServer = "register " + username;
         client.sendMessage(msgToServer);
