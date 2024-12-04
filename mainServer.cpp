@@ -242,6 +242,7 @@ void exitGame(int clientSd)
     // unregistering player here 
     players.erase(clientSd);
 }
+
 // no more unregister method 
 void gameStart(int clientSd, vector<string> &message)
 {

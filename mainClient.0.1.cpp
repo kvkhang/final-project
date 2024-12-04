@@ -37,7 +37,7 @@ int guessToInt(const string &guess)
 bool validateGuess(const string &guess)
 {
     int num = 0;
-    if (guess.length() > 1)
+    if (guess.length() > 1 && guess != "10")
     {
         num = guessToInt(guess);
     }
