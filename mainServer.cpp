@@ -285,7 +285,6 @@ void gameStart(int clientSd, vector<string> &message)
             }
         }
     }
-    cout << "\n";
 
     if (player == 1)
     {
@@ -300,8 +299,10 @@ void gameStart(int clientSd, vector<string> &message)
     if (player == 1)
     {
         serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand));
-        cout << "player 1 hand: " << playerHand(currentGame.player1_hand) << endl;
+        cout << "\nplayer 1 hand: " << playerHand(currentGame.player1_hand) << endl;
     }
+
+    sleep(1);
 
     if (player == 2)
     {
