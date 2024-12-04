@@ -18,6 +18,8 @@ struct Game
     string player2 = "";
     int player2_Sd = 0;
     unordered_map<int, int> pool;
+    unordered_map<int, int> player1_hand;
+    unordered_map<int, int> player2_hand;
 };
 
 void handleMessage(int clientSd, const string &message);
@@ -249,6 +251,29 @@ void gameStart(int clientSd, vector<string> &message)
     {
         return;
     }
+
+    for (int i = 1; i <= 13; i++)
+    {
+        currentGame.pool[i] = 4;
+        currentGame.player1_hand[i] = 0;
+        currentGame.player2_hand[i] = 0;
+    }
+
+    for (int i = 0; i < 7; i++)
+    {
+        bool isZero1 = true;
+        bool isZero2 = true;
+        int random = 0;
+        while (true)
+        {
+            random = 1 + rand() % 13;
+            if (currentGame.pool[random] != 0)
+            {
+                currentGame.pool[random]--;
+            }
+        }
+    }
+
     if (player == 1)
     {
         serverWrite(currentGame.player2_Sd, currentGame.player1);
