@@ -9,18 +9,28 @@
 
 using namespace std;
 
+struct Game
+{
+    string name;
+    string player1 = "";
+    int player1_Sd = 0;
+    string player2 = "";
+    int player2_Sd = 0;
+};
+
 void handleMessage(int clientSd, const string &message);
 vector<string> tokenizer(string message);
 void registerPlayer(int clientSd, vector<string> &message);
 void listGames(int clientSd);
 void createGame(int clientSd, vector<string> &message);
 void joinGame(int clientSd, vector<string> &message);
-void exitGame(int cliendSd, vector<string> &message);
+void exitGame(int clientSd, vector<string> &message);
+void gameStart(int clientSd, vector<string> &message);
 void unregisterPlayer(int clientSd, vector<string> &message);
 
 vector<string> players;
-vector<string> openGames;
-vector<string> closedGames;
+vector<Game> openGames;
+vector<Game> closedGames;
 
 int main(int argc, char const *argv[])
 {
@@ -58,7 +68,6 @@ int main(int argc, char const *argv[])
 
 void handleMessage(int clientSd, const string &message)
 {
-    cout << "Handling message from client: " << message << endl;
     vector<string> tokens = tokenizer(message);
     if (tokens[0] == "register")
     {
@@ -82,6 +91,10 @@ void handleMessage(int clientSd, const string &message)
     else if (tokens[0] == "quit")
     {
     }
+    else if (tokens[0] == "gamestart")
+    {
+        gameStart(clientSd, tokens);
+    }
     else if (tokens[0] == "game")
     {
     }
@@ -101,11 +114,12 @@ vector<string> tokenizer(string message)
     }
 
     // Print tokens (for debugging purposes)
-    cout << "Tokens:" << endl;
+    cout << "Tokens: ";
     for (const auto &t : tokens)
     {
-        cout << t << endl;
+        cout << t << " ";
     }
+    cout << endl;
 
     return tokens;
 }
@@ -129,31 +143,37 @@ void registerPlayer(int clientSd, vector<string> &message)
 void listGames(int clientSd)
 {
     string message = "Open:";
-    for (string x : openGames)
+    for (Game x : openGames)
     {
-        message += " (" + x + ")";
+        message += " (" + x.name + ")";
     }
     message += "\nClosed:";
-    for (string x : closedGames)
+    for (Game x : closedGames)
     {
-        message += " (" + x + ")";
+        message += " (" + x.name + ")";
     }
     write(clientSd, message.c_str(), message.size());
 }
 void createGame(int clientSd, vector<string> &message)
 {
-    string name;
-    if (message.size() > 2)
+    if (message.size() > 3)
     {
         char response = 'S'; // Failure
         write(clientSd, &response, sizeof(response));
         return;
     }
-    name = message[1];
-    auto it = find(openGames.begin(), openGames.end(), name);
-    if (it == openGames.end()) // Player not found
+    string user = message[1];
+    string gameName = message[2];
+    vector<Game>::iterator it;
+    it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+                 { return gameName == game.name; });
+    if (it == openGames.end()) // Game not created yet
     {
-        openGames.push_back(name);
+        Game newGame;
+        newGame.name = gameName;
+        newGame.player1 = user;
+        newGame.player1_Sd = clientSd;
+        openGames.push_back(newGame);
         char response = 'T'; // Success
         write(clientSd, &response, sizeof(response));
     }
@@ -165,19 +185,23 @@ void createGame(int clientSd, vector<string> &message)
 }
 void joinGame(int clientSd, vector<string> &message)
 {
-    string name;
-    if (message.size() > 2)
+    if (message.size() > 3)
     {
         char response = 'S'; // Failure
         write(clientSd, &response, sizeof(response));
         return;
     }
-    name = message[1];
-    auto it = find(openGames.begin(), openGames.end(), name);
-    if (it != openGames.end()) // Player not found
+    string user = message[1];
+    string gameName = message[2];
+    auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+                      { return gameName == game.name; });
+    if (it != openGames.end()) // Game found
     {
-        openGames.erase(remove(openGames.begin(), openGames.end(), name), openGames.end());
-        closedGames.push_back(name);
+        Game &currentGame = *it;
+        currentGame.player2 = user;
+        currentGame.player2_Sd = clientSd;
+        closedGames.push_back(currentGame);
+        openGames.erase(it);
         char response = 'T'; // Success
         write(clientSd, &response, sizeof(response));
     }
@@ -187,9 +211,53 @@ void joinGame(int clientSd, vector<string> &message)
         write(clientSd, &response, sizeof(response));
     }
 }
-void exitGame(int cliendSd, vector<string> &message)
+void exitGame(int clientSd, vector<string> &message)
 {
 }
 void unregisterPlayer(int clientSd, vector<string> &message)
 {
+}
+void gameStart(int clientSd, vector<string> &message)
+{
+    string user = message[1];
+    string gameName = message[2];
+    int player = stoi(message[3]);
+    vector<Game>::iterator it;
+    if (player == 1)
+    {
+        it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+                     { return gameName == game.name; });
+    }
+    if (player == 2)
+    {
+        it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game)
+                     { return gameName == game.name; });
+    }
+    Game &currentGame = *it;
+    // cout << currentGame.name << endl;
+    // cout << currentGame.player1 << endl;
+    // cout << currentGame.player1_Sd << endl;
+    // cout << currentGame.player2 << endl;
+    // cout << currentGame.player2_Sd << endl;
+    int repeat = 120;
+    while (currentGame.player1.empty() || currentGame.player1_Sd == 0 || currentGame.player2.empty() || currentGame.player2_Sd == 0)
+    {
+        cout << gameName << " looking for player2..." << endl;
+        sleep(1);
+        repeat--;
+        if (repeat < 0)
+            break;
+    }
+    if (repeat < 1)
+    {
+        return;
+    }
+    if (player == 1)
+    {
+        write(currentGame.player2_Sd, currentGame.player1.c_str(), currentGame.player1.size());
+    }
+    if (player == 2)
+    {
+        write(currentGame.player1_Sd, currentGame.player2.c_str(), currentGame.player2.size());
+    }
 }

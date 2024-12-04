@@ -39,6 +39,7 @@ int main(int argc, char const *argv[])
     string msgToServer;
     string username;
     string response;
+    int playerNumber;
 
     while (true)
     {
@@ -59,24 +60,25 @@ int main(int argc, char const *argv[])
     }
 
     string message;
+    string gameName;
     bool gameStart = false;
     while (true)
     {
         cout << "<" << username << "> ";
         getline(cin, message);
         // Each command will start related protocol in server
-        if (message == "list")
+        if (message == "list") // Gives lists of current games
         {
             client.sendMessage("list");
             response = client.receiveMessage();
             cout << response << endl;
         }
-        else if (message == "create")
+        else if (message == "create") // Creates a game
         {
             cout << "<Server> What would you like to name the game?\n"
                  << "<" << username << "> ";
             getline(cin, message);
-            msgToServer = "create " + message;
+            msgToServer = "create " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
             if (response == "F")
@@ -89,15 +91,17 @@ int main(int argc, char const *argv[])
             }
             else
             {
+                gameName = message;
+                playerNumber = 1;
                 gameStart = true;
             }
         }
-        else if (message == "join")
+        else if (message == "join") // Joins a known game
         {
             cout << "<Server> Which game would you like to join?\n"
                  << "<" << username << "> ";
             getline(cin, message);
-            msgToServer = "join " + message;
+            msgToServer = "join " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
             if (response == "F")
@@ -110,16 +114,18 @@ int main(int argc, char const *argv[])
             }
             else
             {
+                gameName = message;
+                playerNumber = 2;
                 gameStart = true;
             }
         }
-        else if (message == "quit")
+        else if (message == "quit") // Quits game entirely
         {
             cout << "<Server> Goodbye!" << endl;
             client.disconnect();
             break;
         }
-        else if (message == "help")
+        else if (message == "help") // Explains all functions
         {
         }
         else
@@ -130,8 +136,10 @@ int main(int argc, char const *argv[])
         if (gameStart)
         {
             cout << "Waiting to connect..." << endl;
-            string response = client.receiveMessage();
-            cout << "Game Start! " << username << " vs. " << endl;
+            msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
+            client.sendMessage(msgToServer);
+            string oppUser = client.receiveMessage();
+            cout << "Game Start! " << username << " vs. " << oppUser << endl;
             while (true)
             {
             }
