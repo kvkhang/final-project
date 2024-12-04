@@ -120,9 +120,10 @@ void *Server::handleClient(void *arg)
 
         string message(buffer); // Convert buffer to string
 
-        cout << "Received: " << message << endl;
+        // Debug log
+        cout << "Received raw message: " << message << endl;
 
-        // Call the passed handler function
+        // Call the handler function
         handler(clientSd, message);
     }
 
