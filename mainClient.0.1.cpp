@@ -200,10 +200,62 @@ int main(int argc, char const *argv[])
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;
+            string hand;
             while (true)
             {
+                hand = client.receiveMessage();
+                cout << "Current hand: " + hand << endl;
                 if (playerNumber == 1)
                 {
+                    // player guessing
+                    cout << "Please input guess: \n"
+                         << "<" << username << "> ";
+                    getline(cin, input);
+                    // continues to guess until a valid guess is given
+                    while (!validateGuess(input))
+                    {
+                        cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
+                        cout << "Please input guess: \n"
+                             << "<" << username << "> ";
+                        getline(cin, input);
+                    }
+                    // sends guess to server
+                    msgToServer = "game " + gameName + " " + to_string(playerNumber) + " " + input;
+                    client.sendMessage(msgToServer);
+
+                    // server sends outcome to guess
+                    outcome = client.receiveMessage();
+                    if (outcome == "T")
+                    {
+                        cout << "You have guessed correctly and received a(n) " << input << endl;
+                    }
+
+                    // waits for other player to guess
+                    cout << "Waiting on " << oppUser << endl;
+                    response = client.receiveMessage();
+                    cout << oppUser << " has guessed: " << response << endl;
+                    outcome = client.receiveMessage();
+
+                    // other player guesses correctly and takes your card
+                    if (outcome == "T")
+                    {
+                        cout << "Your " + response + " card has been taken." << endl;
+                    }
+                }
+                else if (playerNumber == 2)
+                {
+                    // waiting for other player
+                    cout << "Waiting on " << oppUser << endl;
+                    response = client.receiveMessage();
+                    cout << oppUser << " has guessed: " << response << endl;
+                    outcome = client.receiveMessage();
+                    // other player guesses correctly and takes your card
+                    if (outcome == "T")
+                    {
+                        cout << "Your " + response + " card has been taken." << endl;
+                    }
+
+                    // player guessing
                     cout << "Please input guess: \n"
                          << "<" << username << "> ";
                     getline(cin, input);
@@ -215,24 +267,15 @@ int main(int argc, char const *argv[])
                         getline(cin, input);
                     }
 
+                    // sending guess to server
                     msgToServer = "game " + gameName + " " + to_string(playerNumber) + " " + input;
                     client.sendMessage(msgToServer);
+
+                    // server giving result
                     outcome = client.receiveMessage();
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
-                    }
-                }
-                else if (playerNumber == 2)
-                {
-                    cout << "Waiting on " << oppUser << endl;
-                    response = client.receiveMessage();
-                    cout << oppUser << " has guessed: " << response << endl;
-                    outcome = client.receiveMessage();
-                    // other player guesses correctly and takes your card
-                    if (outcome == "T")
-                    {
-                        cout << "Your " + response + " card has been taken." << endl;
                     }
                 }
             }

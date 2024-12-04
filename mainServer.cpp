@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ struct Game
     int player1_Sd = 0;
     string player2 = "";
     int player2_Sd = 0;
+    unordered_map<int, int> pool;
 };
 
 void handleMessage(int clientSd, const string &message);
