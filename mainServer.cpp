@@ -137,17 +137,22 @@ vector<string> tokenizer(string message)
 
 void registerPlayer(int clientSd, vector<string> &message)
 {
-
-    auto it = players.find(clientSd);
-    if (it == players.end()) // Player not found
-    {
-        players[clientSd] = (message[1]);
-        serverWrite(clientSd, "T"); // Success
+    bool nameNotFound = true;
+    for(const auto& pair: players) {
+        if(pair.second == message[1]) {
+            nameNotFound = false;
+            break;
+        }
     }
-    else
-    {
+    auto it = players.find(clientSd);
+    if(nameNotFound) { // Player not found
+        players[clientSd] = message[1];
+        serverWrite(clientSd, "T"); // Success
+
+    } else {
         serverWrite(clientSd, "F"); // Failure
     }
+
 }
 
 void listGames(int clientSd)
