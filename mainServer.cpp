@@ -29,14 +29,14 @@ void registerPlayer(int clientSd, vector<string> &message);
 void listGames(int clientSd);
 void createGame(int clientSd, vector<string> &message);
 void joinGame(int clientSd, vector<string> &message);
-void exitGame(int clientSd, vector<string> &message);
+void exitGame(int clientSd);
 void gameStart(int clientSd, vector<string> &message);
-void unregisterPlayer(int clientSd, vector<string> &message);
+void unregisterPlayer(int clientSd);
 void game(int clientSd, vector<string> &message);
 string playerHand(unordered_map<int, int> &hand);
 string intToString(const int &handNum);
 
-vector<string> players;
+unordered_map<int, string> players;
 vector<Game> openGames;
 vector<Game> closedGames;
 
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
     }
 
     // Start the server, passing the message handler
-    server.start(handleMessage);
+    server.start(handleMessage, exitGame);
 
     return 0;
 }
@@ -95,7 +95,7 @@ void handleMessage(int clientSd, const string &message)
     }
     else if (tokens[0] == "exit")
     {
-        exitGame(clientSd, tokens);
+        exitGame(clientSd);
     }
     else if (tokens[0] == "gamestart")
     {
@@ -133,10 +133,11 @@ vector<string> tokenizer(string message)
 
 void registerPlayer(int clientSd, vector<string> &message)
 {
-    auto it = find(players.begin(), players.end(), message[1]);
+
+    auto it = players.find(clientSd);
     if (it == players.end()) // Player not found
     {
-        players.push_back(message[1]);
+        players[clientSd] = (message[1]);
         serverWrite(clientSd, "T"); // Success
     }
     else
@@ -213,12 +214,13 @@ void joinGame(int clientSd, vector<string> &message)
         write(clientSd, &response, sizeof(response));
     }
 }
-void exitGame(int clientSd, vector<string> &message)
+
+void exitGame(int clientSd)
 {
-    string username = message[1];
+    // ! something wrong
     // removing user from openGames vec
     auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game) {
-        return game.player1 == username || game.player2 == username;
+        return game.player1_Sd == clientSd || game.player2_Sd == clientSd;
     });
 
     if (it != openGames.end()) {
@@ -227,30 +229,17 @@ void exitGame(int clientSd, vector<string> &message)
 
     // removing user from closedGames vec
     it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game) {
-        return game.player1 == username || game.player2 == username;
+        return game.player1_Sd == clientSd || game.player2_Sd == clientSd;
     });
 
     if (it != closedGames.end()) {
         closedGames.erase(it);
     }
 
-    // unregistering player
-    vector<string> unregisterMessage = {"unregister", username};
-    unregisterPlayer(clientSd, unregisterMessage);
-
-    // goodbye message for client
-    serverWrite(clientSd, "\n------------------------------------\n");
-    serverWrite(clientSd, "Thank you for playing LaGuessy!\nCredits: Lagesse, Legacy, L-L-La Guessy?\n");
+    // unregistering player here 
+    players.erase(clientSd);
 }
-void unregisterPlayer(int clientSd, vector<string> &message)
-{
-    string username = message[1];
-    auto it = find(players.begin(), players.end(), username);
-    if (it != players.end())
-    {
-        players.erase(it);
-    }
-}
+// no more unregister method 
 void gameStart(int clientSd, vector<string> &message)
 {
     string user = message[1];
@@ -284,6 +273,7 @@ void gameStart(int clientSd, vector<string> &message)
     }
     if (repeat < 1)
     {
+        exitGame(clientSd);
         return;
     }
 

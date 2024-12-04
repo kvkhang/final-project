@@ -55,6 +55,11 @@ bool validateGuess(const string &guess)
     return validGuesses.count(num);
 }
 
+void quitHelper(Client &client, const string &username)
+{
+    cout << "\nYou have chosen to exit the game!" << endl;
+    client.disconnect();
+}
 int main(int argc, char const *argv[])
 {
     if (argc != 3)
@@ -179,22 +184,8 @@ int main(int argc, char const *argv[])
         }
         else if (message == "quit") // Quits game entirely
         {
-            cout << "\nYou have chosen to exit the game!" << endl;
-            cout << "\nEnter Y to confirm your action\nOtherwise will return to the game: ";
-            string confirm;
-            getline(cin, confirm);
-            if (confirm == "Y" || confirm == "y") 
-            {
-                client.sendMessage("exit " + username); // Notify the server
-                response = client.receiveMessage();
-                cout << response << endl;
-                client.disconnect();
-                break;
-            } 
-            else 
-            {
-                cout << "Returning to the game." << endl;
-            }
+            quitHelper(client, username);
+            break;
         }
         else if (message == "help") // Explains all functions
         {
