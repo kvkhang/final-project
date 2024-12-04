@@ -21,6 +21,7 @@ struct Game
 };
 
 void handleMessage(int clientSd, const string &message);
+void serverWrite(int clientSd, const string &message);
 vector<string> tokenizer(string message);
 void registerPlayer(int clientSd, vector<string> &message);
 void listGames(int clientSd);
@@ -29,7 +30,7 @@ void joinGame(int clientSd, vector<string> &message);
 void exitGame(int clientSd, vector<string> &message);
 void gameStart(int clientSd, vector<string> &message);
 void unregisterPlayer(int clientSd, vector<string> &message);
-void game();
+void game(int clientSd, vector<string> &message);
 
 vector<string> players;
 vector<Game> openGames;
@@ -97,6 +98,7 @@ void handleMessage(int clientSd, const string &message)
     }
     else if (tokens[0] == "game")
     {
+        game(clientSd, tokens);
     }
 }
 
@@ -130,13 +132,11 @@ void registerPlayer(int clientSd, vector<string> &message)
     if (it == players.end()) // Player not found
     {
         players.push_back(message[1]);
-        char response = 'T'; // Success
-        write(clientSd, &response, sizeof(response));
+        serverWrite(clientSd, "T"); // Success
     }
     else
     {
-        char response = 'F'; // Failure
-        write(clientSd, &response, sizeof(response));
+        serverWrite(clientSd, "F"); // Failure
     }
 }
 
@@ -152,14 +152,13 @@ void listGames(int clientSd)
     {
         message += " (" + x.name + ")";
     }
-    write(clientSd, message.c_str(), message.size());
+    serverWrite(clientSd, message);
 }
 void createGame(int clientSd, vector<string> &message)
 {
     if (message.size() > 3)
     {
-        char response = 'S'; // Failure
-        write(clientSd, &response, sizeof(response));
+        serverWrite(clientSd, "S"); // Failure
         return;
     }
     string user = message[1];
@@ -174,21 +173,19 @@ void createGame(int clientSd, vector<string> &message)
         newGame.player1 = user;
         newGame.player1_Sd = clientSd;
         openGames.push_back(newGame);
-        char response = 'T'; // Success
-        write(clientSd, &response, sizeof(response));
+        serverWrite(clientSd, "T"); // Success
     }
     else
     {
-        char response = 'F'; // Failure
-        write(clientSd, &response, sizeof(response));
+        serverWrite(clientSd, "F"); // Failure
     }
 }
 void joinGame(int clientSd, vector<string> &message)
 {
     if (message.size() > 3)
     {
-        char response = 'S'; // Failure
-        write(clientSd, &response, sizeof(response));
+        // Failure
+        serverWrite(clientSd, "S");
         return;
     }
     string user = message[1];
@@ -202,8 +199,8 @@ void joinGame(int clientSd, vector<string> &message)
         currentGame.player2_Sd = clientSd;
         closedGames.push_back(currentGame);
         openGames.erase(it);
-        char response = 'T'; // Success
-        write(clientSd, &response, sizeof(response));
+        // Success
+        serverWrite(clientSd, "T");
     }
     else
     {
@@ -254,10 +251,19 @@ void gameStart(int clientSd, vector<string> &message)
     }
     if (player == 1)
     {
-        write(currentGame.player2_Sd, currentGame.player1.c_str(), currentGame.player1.size());
+        serverWrite(currentGame.player2_Sd, currentGame.player1);
     }
     if (player == 2)
     {
-        write(currentGame.player1_Sd, currentGame.player2.c_str(), currentGame.player2.size());
+        serverWrite(currentGame.player1_Sd, currentGame.player2);
     }
+}
+
+void game()
+{
+}
+
+void serverWrite(int clientSd, const string &message)
+{
+    write(clientSd, message.c_str(), message.size());
 }
