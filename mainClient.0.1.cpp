@@ -103,7 +103,8 @@ int main(int argc, char const *argv[])
     cout << "  - enter a command: list, create, join, quit" << endl;
     cout << "  - follow the prompts" << endl;
     cout << "  - enjoy the game!" << endl;
-    cout << "\nType 'help' for more information.\n" << endl;
+    cout << "\nType 'help' for more information.\n"
+         << endl;
 
     while (true)
     {
@@ -260,7 +261,9 @@ int main(int argc, char const *argv[])
                     if (outcome == "T")
                     {
                         cout << "Your " + response + " card has been taken." << endl;
-                    } else {
+                    }
+                    else
+                    {
                         cout << oppUser + " has drawn a card." << endl;
                     }
                 }
@@ -305,7 +308,8 @@ int main(int argc, char const *argv[])
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
-                    } else 
+                    }
+                    else
                     {
                         cout << "You have guessed incorrectly and received a(n) " << outcome << endl;
                     }
@@ -317,7 +321,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 // TODO: fix possible hand rerolling
-    // player 1 drawing when guessing correctly
-    // fixed: hands aren't rerolling. there are two different hands for player each player
+// player 1 drawing when guessing correctly
+// fixed: hands aren't rerolling. there are two different hands for player each player
 // TODO: fix scoring/pair finding
 // TODO: fix random num generator

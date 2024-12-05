@@ -33,12 +33,11 @@ void createGame(int clientSd, vector<string> &message);
 void joinGame(int clientSd, vector<string> &message);
 void exitGame(int clientSd);
 void gameStart(int clientSd, vector<string> &message);
-void unregisterPlayer(int clientSd);
+// void unregisterPlayer(int clientSd); // Removed unused function declaration
 void game(int clientSd, vector<string> &message);
 string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore);
 string intToString(const int &handNum);
 int guessToInt(const string &guess);
-
 
 unordered_map<int, string> players;
 vector<Game> openGames;
@@ -138,21 +137,24 @@ vector<string> tokenizer(string message)
 void registerPlayer(int clientSd, vector<string> &message)
 {
     bool nameNotFound = true;
-    for(const auto& pair: players) {
-        if(pair.second == message[1]) {
+    for (const auto &pair : players)
+    {
+        if (pair.second == message[1])
+        {
             nameNotFound = false;
             break;
         }
     }
     auto it = players.find(clientSd);
-    if(nameNotFound) { // Player not found
+    if (nameNotFound)
+    { // Player not found
         players[clientSd] = message[1];
         serverWrite(clientSd, "T"); // Success
-
-    } else {
+    }
+    else
+    {
         serverWrite(clientSd, "F"); // Failure
     }
-
 }
 
 void listGames(int clientSd)
@@ -228,28 +230,28 @@ void exitGame(int clientSd)
 {
     // ! something wrong
     // removing user from openGames vec
-    auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game) {
-        return game.player1_Sd == clientSd || game.player2_Sd == clientSd;
-    });
+    auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
+                      { return game.player1_Sd == clientSd || game.player2_Sd == clientSd; });
 
-    if (it != openGames.end()) {
+    if (it != openGames.end())
+    {
         openGames.erase(it);
     }
 
     // removing user from closedGames vec
-    it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game) {
-        return game.player1_Sd == clientSd || game.player2_Sd == clientSd;
-    });
+    it = find_if(closedGames.begin(), closedGames.end(), [&](const Game &game)
+                 { return game.player1_Sd == clientSd || game.player2_Sd == clientSd; });
 
-    if (it != closedGames.end()) {
+    if (it != closedGames.end())
+    {
         closedGames.erase(it);
     }
 
-    // unregistering player here 
+    // unregistering player here
     players.erase(clientSd);
 }
 
-// no more unregister method 
+// no more unregister method
 void gameStart(int clientSd, vector<string> &message)
 {
     string user = message[1];
@@ -328,17 +330,12 @@ void gameStart(int clientSd, vector<string> &message)
         serverWrite(currentGame.player1_Sd, currentGame.player2);
     }
 
-    // send client's their hand
-    if (player == 1)
+    // sends clients hand from same game
+    if (player == 2)
     {
         serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1,
                                                        currentGame.player2, currentGame.player1_score, currentGame.player2_score));
-    }
-
-    sleep(1);
-
-    if (player == 2)
-    {
+        sleep(1);
         serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2,
                                                        currentGame.player1, currentGame.player2_score, currentGame.player1_score));
     }
@@ -401,7 +398,7 @@ void game(int clientSd, vector<string> &message)
             sleep(1);
             serverWrite(currentGame.player2_Sd, "F");
         }
-    } 
+    }
 
     // player 2 is guessing
     if (player == 2)
@@ -460,11 +457,11 @@ void game(int clientSd, vector<string> &message)
     }
 
     // send clients their hand
-        serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1, currentGame.player2,
-                                                       currentGame.player1_score, currentGame.player2_score));
+    serverWrite(currentGame.player1_Sd, playerHand(currentGame.player1_hand, currentGame.player1, currentGame.player2,
+                                                   currentGame.player1_score, currentGame.player2_score));
 
-        serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2, currentGame.player1,
-                                                       currentGame.player2_score, currentGame.player1_score));
+    serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2, currentGame.player1,
+                                                   currentGame.player2_score, currentGame.player1_score));
 }
 
 string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore)
@@ -527,9 +524,12 @@ int guessToInt(const string &guess)
         return 1;
     }
 
-    try {
+    try
+    {
         return stoi(guess);
-    } catch (const invalid_argument &e) {
+    }
+    catch (const invalid_argument &e)
+    {
         return -1;
     }
 }
