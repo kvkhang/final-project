@@ -215,10 +215,11 @@ int main(int argc, char const *argv[])
             string input;
             string outcome;
             string hand;
+            string gameOver;
+            hand = client.receiveMessage();
+            cout << "\nCurrent hand: " + hand << endl;
             while (true)
             {
-                hand = client.receiveMessage();
-                cout << "\nCurrent hand: " + hand << endl;
                 if (playerNumber == 1)
                 {
                     // player guessing
@@ -250,6 +251,14 @@ int main(int argc, char const *argv[])
 
                     hand = client.receiveMessage();
                     cout << "\nCurrent hand: " + hand << endl;
+
+                    gameOver = client.receiveMessage();
+                    if (gameOver != "F")
+                    {
+                        cout << gameOver << endl;
+                        gameStart = false;
+                        break;
+                    }
 
                     // waits for other player to guess
                     cout << "Waiting on " << oppUser << endl;
@@ -284,8 +293,17 @@ int main(int argc, char const *argv[])
                         cout << oppUser + " has drawn a card." << endl;
                     }
                     sleep(1);
+
                     hand = client.receiveMessage();
                     cout << "\nCurrent hand: " + hand << endl;
+
+                    gameOver = client.receiveMessage();
+                    if (gameOver != "F")
+                    {
+                        cout << gameOver << endl;
+                        gameStart = false;
+                        break;
+                    }
 
                     // player guessing
                     cout << "Please input guess: \n"
@@ -314,14 +332,19 @@ int main(int argc, char const *argv[])
                         cout << "You have guessed incorrectly and received a(n) " << outcome << endl;
                     }
                 }
+                hand = client.receiveMessage();
+                cout << "\nCurrent hand: " + hand << endl;
+                gameOver = client.receiveMessage();
+                if (gameOver != "F")
+                {
+                    cout << gameOver << endl;
+                    gameStart = false;
+                    break;
+                }
             }
         }
     }
 
     return 0;
 }
-// TODO: fix possible hand rerolling
-// player 1 drawing when guessing correctly
-// fixed: hands aren't rerolling. there are two different hands for player each player
-// TODO: fix scoring/pair finding
 // TODO: fix random num generator

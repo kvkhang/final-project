@@ -22,6 +22,40 @@ struct Game
     unordered_map<int, int> pool;
     unordered_map<int, int> player1_hand;
     unordered_map<int, int> player2_hand;
+    bool isOver()
+    {
+        int hi = max(player1_score, player2_score);
+        int lo = min(player1_score, player2_score);
+        if (hi >= 5 && (hi - lo) >= 2)
+        {
+            return true;
+        }
+        bool isEmpty1 = true;
+        bool isEmpty2 = true;
+        for (int i = 1; i <= 13; i++)
+        {
+            if (player1_hand[i] > 0)
+            {
+                isEmpty1 = false;
+            }
+            if (player2_hand[i] > 0)
+            {
+                isEmpty2 = false;
+            }
+        }
+
+        return pool.empty() || isEmpty1 || isEmpty2;
+    }
+    bool isTie() const
+    {
+        return player1_score == player2_score;
+    }
+    string findWinner() const
+    {
+        if (player1_score > player2_score)
+            return player1;
+        return player2;
+    }
 };
 
 void handleMessage(int clientSd, const string &message);
@@ -171,6 +205,7 @@ void listGames(int clientSd)
     }
     serverWrite(clientSd, message);
 }
+
 void createGame(int clientSd, vector<string> &message)
 {
     if (message.size() > 3)
@@ -197,6 +232,7 @@ void createGame(int clientSd, vector<string> &message)
         serverWrite(clientSd, "F"); // Failure
     }
 }
+
 void joinGame(int clientSd, vector<string> &message)
 {
     if (message.size() > 3)
@@ -462,6 +498,28 @@ void game(int clientSd, vector<string> &message)
 
     serverWrite(currentGame.player2_Sd, playerHand(currentGame.player2_hand, currentGame.player2, currentGame.player1,
                                                    currentGame.player2_score, currentGame.player1_score));
+
+    sleep(1);
+
+    if (currentGame.isOver())
+    {
+        if (currentGame.isTie())
+        {
+            serverWrite(currentGame.player1_Sd, "\nGame Over!\nTie!");
+            serverWrite(currentGame.player2_Sd, "\nGame Over!\nTie!");
+        }
+        else
+        {
+            string winner = currentGame.findWinner();
+            serverWrite(currentGame.player1_Sd, "\nGame Over!\n" + winner + " has won!");
+            serverWrite(currentGame.player2_Sd, "\nGame Over!\n" + winner + " has won!");
+        }
+    }
+    else
+    {
+        serverWrite(currentGame.player1_Sd, "F");
+        serverWrite(currentGame.player2_Sd, "F");
+    }
 }
 
 string playerHand(unordered_map<int, int> &hand, const string &playerName, const string &oppName, int playerScore, int oppScore)
