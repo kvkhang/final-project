@@ -59,6 +59,7 @@ bool validateGuess(const string &guess)
 void quitHelper(Client &client, const string &username)
 {
     cout << "\nYou have chosen to exit the game!" << endl;
+    client.sendMessage("exit " + username);
     client.disconnect();
 }
 int main(int argc, char const *argv[])
@@ -101,6 +102,10 @@ int main(int argc, char const *argv[])
     cout << "\nHow to Start:" << endl;
     cout << "  - enter a username" << endl;
     cout << "  - enter a command: list, create, join, quit" << endl;
+    cout << "      - list: view open and close games" << endl;
+    cout << "      - create: create a new game with a unique name" << endl;
+    cout << "      - join: join an open game" << endl;
+    cout << "      - quit: exit the game :(" << endl;
     cout << "  - follow the prompts" << endl;
     cout << "  - enjoy the game!" << endl;
     cout << "\nType 'help' for more information.\n"
@@ -119,7 +124,8 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            cout << "User created!" << endl;
+            cout << "\nUser sucessfully created!" << endl;
+            cout << "Enter a command:" << endl;
             break;
         }
     }
@@ -143,6 +149,14 @@ int main(int argc, char const *argv[])
             cout << "<Server> What would you like to name the game?\n"
                  << "<" << username << "> ";
             getline(cin, message);
+
+            // user able to quit at any time
+            if (message.find("quit") != string::npos)
+            {
+               quitHelper(client, username);
+               break;
+            }
+
             msgToServer = "create " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
@@ -166,6 +180,14 @@ int main(int argc, char const *argv[])
             cout << "<Server> Which game would you like to join?\n"
                  << "<" << username << "> ";
             getline(cin, message);
+            
+            // user able to quit at any time
+            if (message.find("quit") != string::npos)
+            {
+               quitHelper(client, username);
+               break;
+            }
+
             msgToServer = "join " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
@@ -210,7 +232,7 @@ int main(int argc, char const *argv[])
             cout << "Waiting to connect..." << endl;
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
-            string oppUser = client.receiveMessage();
+             string oppUser = client.receiveMessage();
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;
@@ -226,6 +248,12 @@ int main(int argc, char const *argv[])
                     cout << "Please input guess: \n"
                          << "<" << username << "> ";
                     getline(cin, input);
+                    // user able to quit at any time
+                    if (input.find("quit") != string::npos)
+                    {
+                        quitHelper(client, username);
+                        return 0;
+                    }
                     // continues to guess until a valid guess is given
                     while (!validateGuess(input))
                     {
@@ -309,6 +337,13 @@ int main(int argc, char const *argv[])
                     cout << "Please input guess: \n"
                          << "<" << username << "> ";
                     getline(cin, input);
+                    // user able to quit at any time
+                    if (input.find("quit") != string::npos)
+                    {
+                        quitHelper(client, username);
+                        
+                        return 0;
+                    }
                     while (!validateGuess(input))
                     {
                         cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
@@ -347,4 +382,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-// TODO: fix random num generator
