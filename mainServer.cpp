@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include <random>
 
 using namespace std;
 
@@ -331,13 +332,17 @@ void gameStart(int clientSd, vector<string> &message)
         currentGame.player1_hand[i] = 0;
         currentGame.player2_hand[i] = 0;
     }
+    // random number generator
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> distrib(1, 13);
 
     for (int i = 0; i < 7; i++)
     {
         int random = 0;
         while (true)
         {
-            random = rand() % 13 + 1;
+            random = distrib(gen);
             if (currentGame.pool[random] != 0)
             {
                 currentGame.pool[random]--;
@@ -347,7 +352,7 @@ void gameStart(int clientSd, vector<string> &message)
         }
         while (true)
         {
-            random = rand() % 13 + 1;
+            random = distrib(gen);
             if (currentGame.pool[random] != 0)
             {
                 currentGame.pool[random]--;
@@ -397,6 +402,11 @@ void game(int clientSd, vector<string> &message)
     Game &currentGame = *it;
     int guessNum = guessToInt(guess);
 
+    // random number generator
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> distrib(1, 13);
+
     // handling guessing
     if (player == 1)
     {
@@ -420,7 +430,7 @@ void game(int clientSd, vector<string> &message)
             int random = 0;
             while (true)
             {
-                random = rand() % 13 + 1;
+                random = distrib(gen);
                 if (currentGame.pool[random] != 0)
                 {
                     currentGame.pool[random]--;
@@ -459,7 +469,7 @@ void game(int clientSd, vector<string> &message)
             int random = 0;
             while (true)
             {
-                random = rand() % 13 + 1;
+                random = distrib(gen);
                 if (currentGame.pool[random] != 0)
                 {
                     currentGame.pool[random]--;
