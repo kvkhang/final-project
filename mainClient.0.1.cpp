@@ -229,22 +229,9 @@ int main(int argc, char const *argv[])
         // Game logic goes here
         if (gameStart)
         {
-            cout << "\nWaiting to connect..." << endl;
+            cout << "\nWaiting to connect...\n" << endl;
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
-            
-            // cout << "Enter 'quit' to exit the game at any time" << endl;
-            // string connectQuit;
-            // getline(cin, connectQuit);
-            
-            // // if user quits and other user isn't connected yet
-            // if (connectQuit == "quit" && playerNumber == 1) 
-            // {
-            //     quitHelper(client, username);
-            //     gameStart = false;
-            //     break;
-            // } 
-
             string oppUser = client.receiveMessage();
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
