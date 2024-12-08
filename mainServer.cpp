@@ -265,7 +265,6 @@ void joinGame(int clientSd, vector<string> &message)
 
 void exitGame(int clientSd)
 {
-    // ! something wrong
     // removing user from openGames vec
     auto it = find_if(openGames.begin(), openGames.end(), [&](const Game &game)
                       { return game.player1_Sd == clientSd || game.player2_Sd == clientSd; });
@@ -318,26 +317,37 @@ void gameStart(int clientSd, vector<string> &message)
                      { return gameName == game.name; });
     }
     Game &currentGame = *it;
-    // cout << currentGame.name << endl;
-    // cout << currentGame.player1 << endl;
-    // cout << currentGame.player1_Sd << endl;
-    // cout << currentGame.player2 << endl;
-    // cout << currentGame.player2_Sd << endl;
-    int repeat = 120;
+
+    int repeat = 120; // max waiting time 2 minutes
+
+    // looping until both players are found
     while (currentGame.player1.empty() || currentGame.player1_Sd == 0 || currentGame.player2.empty() || currentGame.player2_Sd == 0)
     {
-        cout << gameName << " looking for player2..." << endl;
+        cout << gameName << " looking for player 2..." << endl;
+        
+        // handling ctrl c disconnection
+        char buffer[1];
+        ssize_t result = recv(clientSd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT);
+        if (result == 0 || (result < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+        {
+            exitGame(clientSd);
+            return;
+        }
+
+        // if no player2 found in 2 minutes, game is closed
         sleep(1);
         repeat--;
         if (repeat < 0)
             break;
     }
+
     if (repeat < 1)
     {
         exitGame(clientSd);
         return;
     }
-
+    
+    // initializing if game is found
     for (int i = 1; i <= 13; i++)
     {
         currentGame.pool[i] = 4;
