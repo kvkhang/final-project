@@ -233,6 +233,12 @@ int main(int argc, char const *argv[])
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
             string oppUser = client.receiveMessage();
+            if (oppUser == "TIMEOUT")
+            {
+                cout << "Sorry! Could not find another player.\nPlease enter another command:" << endl;
+                gameStart = false;
+                continue;
+            }
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;

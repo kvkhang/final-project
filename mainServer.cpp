@@ -338,9 +338,14 @@ void gameStart(int clientSd, vector<string> &message)
         sleep(1);
         repeat--;
         if (repeat < 0)
+        {
+            // sending msg notifying client
+            serverWrite(clientSd, "TIMEOUT");
             break;
+        }
     }
 
+    // removing game if no player2 found
     if (repeat < 1)
     {
         exitGame(clientSd);
