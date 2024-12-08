@@ -281,6 +281,18 @@ void exitGame(int clientSd)
 
     if (it != closedGames.end())
     {
+        Game &currentGame = *it;
+
+        // notifying remaining player of other's disconnection
+        if (currentGame.player1_Sd == clientSd && currentGame.player2_Sd > 0)
+        {
+            serverWrite(currentGame.player2_Sd, "DISCONNECTED");
+        }
+        else if (currentGame.player2_Sd == clientSd && currentGame.player1_Sd > 0)
+        {
+            serverWrite(currentGame.player1_Sd, "DISCONNECTED");
+        }
+
         closedGames.erase(it);
     }
 

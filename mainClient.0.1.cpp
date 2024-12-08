@@ -232,7 +232,7 @@ int main(int argc, char const *argv[])
             cout << "Waiting to connect..." << endl;
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
-             string oppUser = client.receiveMessage();
+            string oppUser = client.receiveMessage();
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;
@@ -252,6 +252,7 @@ int main(int argc, char const *argv[])
                     if (input.find("quit") != string::npos)
                     {
                         quitHelper(client, username);
+                        gameStart = false;
                         return 0;
                     }
                     // continues to guess until a valid guess is given
@@ -268,6 +269,14 @@ int main(int argc, char const *argv[])
 
                     // server sends outcome to guess
                     outcome = client.receiveMessage();
+
+                    // Check if the opponent disconnected during the turn
+                    if (outcome == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
@@ -291,6 +300,13 @@ int main(int argc, char const *argv[])
                     // waits for other player to guess
                     cout << "Waiting on " << oppUser << endl;
                     response = client.receiveMessage();
+                     // Check if the opponent disconnected during their turn
+                    if (response == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     cout << oppUser << " has guessed: " << response << endl;
                     outcome = client.receiveMessage();
 
@@ -309,6 +325,12 @@ int main(int argc, char const *argv[])
                     // waiting for other player
                     cout << "Waiting on " << oppUser << endl;
                     response = client.receiveMessage();
+                    if (response == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     cout << oppUser << " has guessed: " << response << endl;
                     outcome = client.receiveMessage();
                     // other player guesses correctly and takes your card
@@ -358,6 +380,13 @@ int main(int argc, char const *argv[])
 
                     // server giving result
                     outcome = client.receiveMessage();
+                    if (outcome == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
+
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
