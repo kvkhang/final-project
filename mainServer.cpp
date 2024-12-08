@@ -551,6 +551,8 @@ void game(int clientSd, vector<string> &message)
             serverWrite(currentGame.player1_Sd, "\nGame Over!\n" + winner + " has won!");
             serverWrite(currentGame.player2_Sd, "\nGame Over!\n" + winner + " has won!");
         }
+        // removing game from closedGames vec
+        closedGames.erase(it);
     }
     else
     {
