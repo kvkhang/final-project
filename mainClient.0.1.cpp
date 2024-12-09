@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            cout << "\nUser sucessfully created!" << endl;
+            cout << "User sucessfully created!\n" << endl;
             cout << "Enter a command:" << endl;
             break;
         }
@@ -143,6 +143,7 @@ int main(int argc, char const *argv[])
             client.sendMessage("list");
             response = client.receiveMessage();
             cout << response << endl;
+            cout << endl;
         }
         else if (message == "create") // Creates a game
         {
@@ -186,6 +187,16 @@ int main(int argc, char const *argv[])
             {
                quitHelper(client, username);
                break;
+            }
+
+            if (message.find("list") != string::npos)
+            {
+                client.sendMessage("list");
+                response = client.receiveMessage();
+                cout << response << endl;
+                cout << "\n<Server> Which game would you like to join?\n"
+                     << "<" << username << "> ";
+                getline(cin, message);
             }
 
             msgToServer = "join " + username + " " + message;
@@ -262,7 +273,7 @@ int main(int argc, char const *argv[])
                         return 0;
                     }
                     // continues to guess until a valid guess is given
-                    while (!validateGuess(input))
+                    while (!validateGuess(input) && input != "quit")
                     {
                         cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
                         cout << "Please input guess: \n"
@@ -372,7 +383,7 @@ int main(int argc, char const *argv[])
                         
                         return 0;
                     }
-                    while (!validateGuess(input))
+                    while (!validateGuess(input) && input != "quit")
                     {
                         cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
                         cout << "Please input guess: \n"

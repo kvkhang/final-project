@@ -194,15 +194,30 @@ void registerPlayer(int clientSd, vector<string> &message)
 
 void listGames(int clientSd)
 {
-    string message = "Open:";
-    for (Game x : openGames)
+    string message = "-------- Active Games --------\nOpen:";
+    if (openGames.empty())
     {
-        message += " (" + x.name + ")";
+        message += " No open games";
+    } 
+    else 
+    {
+        for (Game x : openGames)
+        {
+            message += " (" + x.name + ")";
+        }
     }
+   
     message += "\nClosed:";
-    for (Game x : closedGames)
+    if (closedGames.empty())
     {
-        message += " (" + x.name + ")";
+        message += " No closed games";
+    }
+    else 
+    {
+        for (Game x : closedGames)
+        {
+            message += " (" + x.name + ")";
+        }
     }
     serverWrite(clientSd, message);
 }
