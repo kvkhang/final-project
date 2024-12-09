@@ -115,6 +115,6 @@ void Client::disconnect()
     {
         close(clientSd);
         clientSd = -1;
-        cout << "Disconnected from server." << endl;
+        cout << "Disconnected from server.\n" << endl;
     }
 }

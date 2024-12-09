@@ -59,6 +59,7 @@ bool validateGuess(const string &guess)
 void quitHelper(Client &client, const string &username)
 {
     cout << "\nYou have chosen to exit the game!" << endl;
+    client.sendMessage("exit " + username);
     client.disconnect();
 }
 int main(int argc, char const *argv[])
@@ -101,6 +102,10 @@ int main(int argc, char const *argv[])
     cout << "\nHow to Start:" << endl;
     cout << "  - enter a username" << endl;
     cout << "  - enter a command: list, create, join, quit" << endl;
+    cout << "      - list: view open and close games" << endl;
+    cout << "      - create: create a new game with a unique name" << endl;
+    cout << "      - join: join an open game" << endl;
+    cout << "      - quit: exit the game :(" << endl;
     cout << "  - follow the prompts" << endl;
     cout << "  - enjoy the game!" << endl;
     cout << "\nType 'help' for more information.\n"
@@ -119,7 +124,8 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            cout << "User created!" << endl;
+            cout << "User sucessfully created!\n" << endl;
+            cout << "Enter a command:" << endl;
             break;
         }
     }
@@ -137,12 +143,21 @@ int main(int argc, char const *argv[])
             client.sendMessage("list");
             response = client.receiveMessage();
             cout << response << endl;
+            cout << endl;
         }
         else if (message == "create") // Creates a game
         {
             cout << "<Server> What would you like to name the game?\n"
                  << "<" << username << "> ";
             getline(cin, message);
+
+            // user able to quit at any time
+            if (message.find("quit") != string::npos)
+            {
+               quitHelper(client, username);
+               break;
+            }
+
             msgToServer = "create " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
@@ -166,6 +181,24 @@ int main(int argc, char const *argv[])
             cout << "<Server> Which game would you like to join?\n"
                  << "<" << username << "> ";
             getline(cin, message);
+            
+            // user able to quit at any time
+            if (message.find("quit") != string::npos)
+            {
+               quitHelper(client, username);
+               break;
+            }
+
+            if (message.find("list") != string::npos)
+            {
+                client.sendMessage("list");
+                response = client.receiveMessage();
+                cout << response << endl;
+                cout << "\n<Server> Which game would you like to join?\n"
+                     << "<" << username << "> ";
+                getline(cin, message);
+            }
+
             msgToServer = "join " + username + " " + message;
             client.sendMessage(msgToServer);
             response = client.receiveMessage();
@@ -207,10 +240,16 @@ int main(int argc, char const *argv[])
         // Game logic goes here
         if (gameStart)
         {
-            cout << "Waiting to connect..." << endl;
+            cout << "\nWaiting to connect...\n" << endl;
             msgToServer = "gamestart " + username + " " + gameName + " " + to_string(playerNumber);
             client.sendMessage(msgToServer);
             string oppUser = client.receiveMessage();
+            if (oppUser == "TIMEOUT")
+            {
+                cout << "Sorry! Could not find another player.\nPlease enter another command:" << endl;
+                gameStart = false;
+                continue;
+            }
             cout << "Game Start! " << username << " vs. " << oppUser << endl;
             string input;
             string outcome;
@@ -226,8 +265,15 @@ int main(int argc, char const *argv[])
                     cout << "Please input guess: \n"
                          << "<" << username << "> ";
                     getline(cin, input);
+                    // user able to quit at any time
+                    if (input.find("quit") != string::npos)
+                    {
+                        quitHelper(client, username);
+                        gameStart = false;
+                        return 0;
+                    }
                     // continues to guess until a valid guess is given
-                    while (!validateGuess(input))
+                    while (!validateGuess(input) && input != "quit")
                     {
                         cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
                         cout << "Please input guess: \n"
@@ -240,6 +286,14 @@ int main(int argc, char const *argv[])
 
                     // server sends outcome to guess
                     outcome = client.receiveMessage();
+
+                    // Check if the opponent disconnected during the turn
+                    if (outcome == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
@@ -263,6 +317,13 @@ int main(int argc, char const *argv[])
                     // waits for other player to guess
                     cout << "Waiting on " << oppUser << endl;
                     response = client.receiveMessage();
+                     // Check if the opponent disconnected during their turn
+                    if (response == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     cout << oppUser << " has guessed: " << response << endl;
                     outcome = client.receiveMessage();
 
@@ -281,6 +342,12 @@ int main(int argc, char const *argv[])
                     // waiting for other player
                     cout << "Waiting on " << oppUser << endl;
                     response = client.receiveMessage();
+                    if (response == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
                     cout << oppUser << " has guessed: " << response << endl;
                     outcome = client.receiveMessage();
                     // other player guesses correctly and takes your card
@@ -309,7 +376,14 @@ int main(int argc, char const *argv[])
                     cout << "Please input guess: \n"
                          << "<" << username << "> ";
                     getline(cin, input);
-                    while (!validateGuess(input))
+                    // user able to quit at any time
+                    if (input.find("quit") != string::npos)
+                    {
+                        quitHelper(client, username);
+                        
+                        return 0;
+                    }
+                    while (!validateGuess(input) && input != "quit")
                     {
                         cout << "Invalid Guess. 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, ace" << endl;
                         cout << "Please input guess: \n"
@@ -323,6 +397,13 @@ int main(int argc, char const *argv[])
 
                     // server giving result
                     outcome = client.receiveMessage();
+                    if (outcome == "DISCONNECTED")
+                    {
+                        cout << "The other player has disconnected. Exiting game." << endl;
+                        gameStart = false;
+                        break;
+                    }
+
                     if (outcome == "T")
                     {
                         cout << "You have guessed correctly and received a(n) " << input << endl;
@@ -347,4 +428,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-// TODO: fix random num generator
