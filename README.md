@@ -16,7 +16,7 @@ Only 2 clients are required to play the game.
   - join: Join an open game.
   - quit: Exit the game :(
 - Follow the prompts.
-- Enjoy the game!
+- Enjoy the game!  
 Type help for more information about each command 
 ---
 Authors: Anthony Vu, Caleb Chun, Hannah Kim  
